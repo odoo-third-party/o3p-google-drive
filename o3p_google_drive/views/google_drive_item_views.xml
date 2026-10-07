@@ -87,7 +87,6 @@
                                 <list create="0" delete="0">
                                     <field name="image" widget="image"/>
                                     <field name="kind"/>
-                                    <field name="is_face" string="Face" optional="show"/>
                                     <field name="width"/>
                                     <field name="height"/>
                                     <field name="byte_length"/>
