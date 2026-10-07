@@ -30,7 +30,16 @@
                     <span t-out="this.state.folder ? this.state.folder.name : 'Explorer'"/>
                 </div>
 
-                <div class="btn-group ms-auto" role="group" aria-label="View mode">
+                <button type="button"
+                        class="btn btn-light ms-auto"
+                        title="Open this folder in Google Drive"
+                        t-att-disabled="!this.state.folder || !this.state.folder.web_view_link"
+                        t-on-click="this.onOpenCurrentInDrive">
+                    <i class="oi oi-fw" data-icon="open_in_new" aria-hidden="true"/>
+                    <span class="d-none d-lg-inline ms-1">Open in Google Drive</span>
+                </button>
+
+                <div class="btn-group" role="group" aria-label="View mode">
                     <button type="button"
                             title="Details view"
                             t-attf-class="btn btn-light {{ this.state.viewMode === 'details' ? 'active' : '' }}"
@@ -124,7 +133,17 @@
                                 </button>
                                 <div t-if="this.state.contextItemId === item.id"
                                      class="o_o3p_drive_explorer_context_menu">
-                                    <span>Actions for this MIME type will appear here.</span>
+                                    <button t-if="item.is_folder &amp;&amp; item.web_view_link"
+                                            type="button"
+                                            class="dropdown-item"
+                                            t-att-data-item-id="item.id"
+                                            t-on-click="this.onOpenItemInDrive">
+                                        <i class="oi oi-fw me-2"
+                                           data-icon="open_in_new"
+                                           aria-hidden="true"/>
+                                        Open in Google Drive
+                                    </button>
+                                    <span t-else="">Actions for this MIME type will appear here.</span>
                                 </div>
                             </td>
                         </tr>
@@ -171,7 +190,17 @@
                     </button>
                     <div t-if="this.state.contextItemId === item.id"
                          class="o_o3p_drive_explorer_context_menu">
-                        <span>Actions for this MIME type will appear here.</span>
+                        <button t-if="item.is_folder &amp;&amp; item.web_view_link"
+                                type="button"
+                                class="dropdown-item"
+                                t-att-data-item-id="item.id"
+                                t-on-click="this.onOpenItemInDrive">
+                            <i class="oi oi-fw me-2"
+                               data-icon="open_in_new"
+                               aria-hidden="true"/>
+                            Open in Google Drive
+                        </button>
+                        <span t-else="">Actions for this MIME type will appear here.</span>
                     </div>
                 </article>
             </div>

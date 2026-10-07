@@ -329,6 +329,7 @@ class GoogleDriveItem(models.Model):
             "name": item.name or item.gid,
             "mime_type": item.mime_type or "",
             "is_folder": item.mime_type == GOOGLE_FOLDER_MIME_TYPE,
+            "web_view_link": item.web_view_link or False,
             "modified_time": fields.Datetime.to_string(item.modified_time)
             if item.modified_time
             else False,

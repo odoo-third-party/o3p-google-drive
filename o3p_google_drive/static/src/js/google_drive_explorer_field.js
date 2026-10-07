@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { registry } from "@web/core/registry";
+import { browser } from "@web/core/browser/browser";
 import { _t } from "@web/core/l10n/translation";
 import { useService } from "@web/core/utils/hooks";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
@@ -194,6 +195,22 @@ export class GoogleDriveExplorerField extends Component {
 
     onToggleHeight() {
         this.state.isExpanded = !this.state.isExpanded;
+    }
+
+    onOpenCurrentInDrive() {
+        this._openInGoogleDrive(this.state.folder?.web_view_link);
+    }
+
+    onOpenItemInDrive(event) {
+        const item = this._itemFromEvent(event);
+        this.state.contextItemId = false;
+        this._openInGoogleDrive(item?.web_view_link);
+    }
+
+    _openInGoogleDrive(url) {
+        if (url) {
+            browser.open(url, "_blank");
+        }
     }
 
     onToggleContext(event) {
