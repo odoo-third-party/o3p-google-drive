@@ -195,8 +195,10 @@ class GoogleDriveItem(models.Model):
                     access_token,
                 )
             elif mime_type.startswith("video/"):
-                raise UserError(
-                    _("Video thumbnail refresh will be added in the next step.")
+                self.env["o3p.google.drive.thumbnail"]._refresh_video_thumbnail(
+                    item,
+                    google_item,
+                    access_token,
                 )
             else:
                 raise UserError(

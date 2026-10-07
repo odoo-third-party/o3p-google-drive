@@ -48,6 +48,14 @@ class GoogleDriveThumbnail(models.Model):
 
     @api.model
     def _refresh_image_thumbnail(self, item, google_item, access_token):
+        return self._refresh_thumbnail(item, google_item, access_token, "image")
+
+    @api.model
+    def _refresh_video_thumbnail(self, item, google_item, access_token):
+        return self._refresh_thumbnail(item, google_item, access_token, "video")
+
+    @api.model
+    def _refresh_thumbnail(self, item, google_item, access_token, kind):
         item.ensure_one()
         thumbnail_link = google_item.get("thumbnailLink")
         if not thumbnail_link:
@@ -77,7 +85,7 @@ class GoogleDriveThumbnail(models.Model):
         values = {
             "item_id": item.id,
             "name": item.name or item.gid,
-            "kind": "image",
+            "kind": kind,
             "image": BinaryBytes(thumbnail, filename="thumbnail.webp"),
             "mimetype": "image/webp",
             "byte_length": len(thumbnail),
