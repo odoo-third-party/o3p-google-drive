@@ -15,6 +15,7 @@ GOOGLE_DRIVE_API_URL = "https://www.googleapis.com/drive/v3"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 REQUEST_TIMEOUT = 20
 DEFAULT_META_MAX_AGE_SECONDS = 900
+GOOGLE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
 
 
 class GoogleDriveItem(models.Model):
@@ -126,17 +127,22 @@ class GoogleDriveItem(models.Model):
         )
         return max(0, value)
 
-    def _refresh_meta(self):
+    def _refresh_meta(self, access_token=None):
         self.ensure_one()
-        item = self._fetch_google_item()
-        meta = dict(self.meta) if isinstance(self.meta, dict) else {}
+        item = self._fetch_google_item(access_token=access_token)
+        meta = self._prepare_meta(item, current_meta=self.meta)
+        self.with_context(o3p_google_drive_refreshing_meta=True).write({"meta": meta})
+        return meta
+
+    @api.model
+    def _prepare_meta(self, item, current_meta=None):
+        meta = dict(current_meta) if isinstance(current_meta, dict) else {}
         meta.update(
             {
                 "fetched_at": fields.Datetime.to_string(fields.Datetime.now()),
                 "item": item,
             }
         )
-        self.with_context(o3p_google_drive_refreshing_meta=True).write({"meta": meta})
         return meta
 
     def action_refresh_meta(self):
@@ -144,9 +150,99 @@ class GoogleDriveItem(models.Model):
             item._refresh_meta()
         return True
 
-    def _fetch_google_item(self):
-        self.ensure_one()
+    def action_refresh_tree(self):
         access_token = self._get_google_access_token()
+        for item in self:
+            item._refresh_meta(access_token=access_token)
+
+        visited_gids = set()
+        for item in self:
+            item._refresh_descendants(access_token, visited_gids)
+        return {"type": "ir.actions.client", "tag": "reload"}
+
+    def _refresh_descendants(self, access_token, visited_gids=None):
+        self.ensure_one()
+        visited_gids = visited_gids if visited_gids is not None else set()
+        pending_parent_gids = [self.gid]
+
+        while pending_parent_gids:
+            parent_gid = pending_parent_gids.pop()
+            if parent_gid in visited_gids:
+                continue
+            visited_gids.add(parent_gid)
+
+            for child_item in self._list_google_children(parent_gid, access_token):
+                child = self._upsert_google_item(child_item)
+                if (
+                    child_item.get("mimeType") == GOOGLE_FOLDER_MIME_TYPE
+                    and child.gid not in visited_gids
+                ):
+                    pending_parent_gids.append(child.gid)
+        return True
+
+    @api.model
+    def _upsert_google_item(self, item):
+        gid = item.get("id")
+        if not gid:
+            raise UserError(_("Google Drive returned an item without an ID."))
+
+        existing = self.search([("gid", "=", gid)], limit=1)
+        meta = self._prepare_meta(
+            item,
+            current_meta=existing.meta if existing else None,
+        )
+        if existing:
+            existing.write({"meta": meta})
+            return existing
+        return self.create(
+            {
+                "gid": gid,
+                "meta": meta,
+                "is_starting_point": False,
+            }
+        )
+
+    @api.model
+    def _list_google_children(self, parent_gid, access_token):
+        escaped_parent_gid = parent_gid.replace("\\", "\\\\").replace("'", "\\'")
+        page_token = None
+        while True:
+            params = {
+                "q": f"'{escaped_parent_gid}' in parents and trashed = false",
+                "fields": "nextPageToken,files(*)",
+                "pageSize": 1000,
+                "spaces": "drive",
+                "supportsAllDrives": "true",
+                "includeItemsFromAllDrives": "true",
+            }
+            if page_token:
+                params["pageToken"] = page_token
+
+            response = requests.get(
+                f"{GOOGLE_DRIVE_API_URL}/files",
+                headers={"Authorization": f"Bearer {access_token}"},
+                params=params,
+                timeout=REQUEST_TIMEOUT,
+            )
+            try:
+                response.raise_for_status()
+            except requests.HTTPError as error:
+                raise UserError(
+                    _(
+                        "Google Drive could not list children of item %(gid)s.",
+                        gid=parent_gid,
+                    )
+                ) from error
+
+            response_data = response.json()
+            yield from response_data.get("files", [])
+            page_token = response_data.get("nextPageToken")
+            if not page_token:
+                break
+
+    def _fetch_google_item(self, access_token=None):
+        self.ensure_one()
+        access_token = access_token or self._get_google_access_token()
         response = requests.get(
             f"{GOOGLE_DRIVE_API_URL}/files/{quote(self.gid, safe='')}",
             headers={"Authorization": f"Bearer {access_token}"},
