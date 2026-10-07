@@ -55,6 +55,12 @@ class GoogleDriveItem(models.Model):
     web_view_link = fields.Char()
     drive_id = fields.Char()
     meta_fetched_at = fields.Datetime()
+    thumbnail_ids = fields.One2many(
+        "o3p.google.drive.thumbnail",
+        "item_id",
+        string="Thumbnails",
+        readonly=True,
+    )
 
     _gid_unique = models.Constraint(
         "UNIQUE (gid)",
@@ -159,12 +165,55 @@ class GoogleDriveItem(models.Model):
     def action_refresh_tree(self):
         access_token = self._get_google_access_token()
         for item in self:
-            item._refresh_meta(access_token=access_token)
+            meta = item._refresh_meta(access_token=access_token)
+            google_item = meta.get("item", {})
+            if google_item.get("mimeType") != GOOGLE_FOLDER_MIME_TYPE:
+                raise UserError(
+                    _(
+                        "Tree refresh is only available for Google Drive folders."
+                    )
+                )
 
+        self._refresh_folder_items(access_token)
+        return {"type": "ir.actions.client", "tag": "reload"}
+
+    def action_deeper_refresh(self):
+        access_token = self._get_google_access_token()
+        folder_items = self.env["o3p.google.drive.item"]
+
+        for item in self:
+            meta = item._refresh_meta(access_token=access_token)
+            google_item = meta.get("item", {})
+            mime_type = google_item.get("mimeType") or ""
+
+            if mime_type == GOOGLE_FOLDER_MIME_TYPE:
+                folder_items |= item
+            elif mime_type.startswith("image/"):
+                self.env["o3p.google.drive.thumbnail"]._refresh_image_thumbnail(
+                    item,
+                    google_item,
+                    access_token,
+                )
+            elif mime_type.startswith("video/"):
+                raise UserError(
+                    _("Video thumbnail refresh will be added in the next step.")
+                )
+            else:
+                raise UserError(
+                    _(
+                        "Deeper refresh is not available for MIME type %(mime_type)s.",
+                        mime_type=mime_type or _("(empty)"),
+                    )
+                )
+
+        folder_items._refresh_folder_items(access_token)
+        return {"type": "ir.actions.client", "tag": "reload"}
+
+    def _refresh_folder_items(self, access_token):
         visited_gids = set()
         for item in self:
             item._refresh_descendants(access_token, visited_gids)
-        return {"type": "ir.actions.client", "tag": "reload"}
+        return True
 
     def _refresh_descendants(self, access_token, visited_gids=None):
         self.ensure_one()

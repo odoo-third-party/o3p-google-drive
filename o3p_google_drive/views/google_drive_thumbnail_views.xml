@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="google_drive_thumbnail_view_list" model="ir.ui.view">
+        <field name="name">o3p.google.drive.thumbnail.list</field>
+        <field name="model">o3p.google.drive.thumbnail</field>
+        <field name="arch" type="xml">
+            <list string="Google Drive Thumbnails" create="0">
+                <field name="image" widget="image"/>
+                <field name="name"/>
+                <field name="item_id"/>
+                <field name="kind"/>
+                <field name="mimetype" optional="show"/>
+                <field name="width" optional="show"/>
+                <field name="height" optional="show"/>
+                <field name="byte_length" optional="show"/>
+                <field name="source_modified_time" optional="hide"/>
+                <field name="refreshed_at" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="google_drive_thumbnail_view_form" model="ir.ui.view">
+        <field name="name">o3p.google.drive.thumbnail.form</field>
+        <field name="model">o3p.google.drive.thumbnail</field>
+        <field name="arch" type="xml">
+            <form string="Google Drive Thumbnail" create="0" edit="0">
+                <sheet>
+                    <group>
+                        <field name="image" widget="image" class="oe_avatar"/>
+                        <group>
+                            <field name="name"/>
+                            <field name="item_id"/>
+                            <field name="kind"/>
+                            <field name="mimetype"/>
+                            <field name="width"/>
+                            <field name="height"/>
+                            <field name="byte_length"/>
+                            <field name="source_modified_time"/>
+                            <field name="refreshed_at"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_google_drive_thumbnail" model="ir.actions.act_window">
+        <field name="name">Google Drive Thumbnails</field>
+        <field name="res_model">o3p.google.drive.thumbnail</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_o3p_google_drive_thumbnail"
+              name="Thumbnails"
+              parent="menu_o3p_google_drive_technical"
+              action="action_google_drive_thumbnail"
+              groups="base.group_system"
+              sequence="20"/>
+</odoo>
