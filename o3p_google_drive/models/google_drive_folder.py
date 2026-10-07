@@ -101,14 +101,11 @@ class GoogleDriveFolder(models.Model):
 
     @api.model
     def _meta_max_age_seconds(self):
-        value = self.env["ir.config_parameter"].sudo().get_param(
+        value = self.env["ir.config_parameter"].sudo().get_int(
             "o3p_google_drive.meta_max_age_seconds",
-            str(DEFAULT_META_MAX_AGE_SECONDS),
+            DEFAULT_META_MAX_AGE_SECONDS,
         )
-        try:
-            return max(0, int(value))
-        except (TypeError, ValueError):
-            return DEFAULT_META_MAX_AGE_SECONDS
+        return max(0, value)
 
     def _refresh_meta(self):
         self.ensure_one()
@@ -175,7 +172,7 @@ class GoogleDriveFolder(models.Model):
 
     @api.model
     def _get_google_credentials(self):
-        raw_credentials = self.env["ir.config_parameter"].sudo().get_param(
+        raw_credentials = self.env["ir.config_parameter"].sudo().get_str(
             "o3p_google_drive.credentials_json"
         )
         try:

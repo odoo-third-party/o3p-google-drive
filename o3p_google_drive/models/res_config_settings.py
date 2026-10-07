@@ -15,13 +15,13 @@ class ResConfigSettings(models.TransientModel):
         values["google_drive_credentials_json"] = (
             self.env["ir.config_parameter"]
             .sudo()
-            .get_param("o3p_google_drive.credentials_json", "")
+            .get_str("o3p_google_drive.credentials_json", "")
         )
         return values
 
     def set_values(self):
         result = super().set_values()
-        self.env["ir.config_parameter"].sudo().set_param(
+        self.env["ir.config_parameter"].sudo().set_str(
             "o3p_google_drive.credentials_json",
             self.google_drive_credentials_json or "",
         )
