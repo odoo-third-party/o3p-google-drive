@@ -110,10 +110,7 @@ class GoogleDriveFolder(models.Model):
     def _refresh_meta(self):
         self.ensure_one()
         item = self._fetch_google_item()
-        if item.get("mimeType") != GOOGLE_FOLDER_MIME_TYPE:
-            raise UserError(
-                _("Google Drive item %(gid)s is not a folder.", gid=self.gid)
-            )
+        self._validate_google_item(item)
 
         meta = dict(self.meta) if isinstance(self.meta, dict) else {}
         meta.update(
@@ -124,6 +121,13 @@ class GoogleDriveFolder(models.Model):
         )
         self.with_context(o3p_google_drive_refreshing_meta=True).write({"meta": meta})
         return meta
+
+    def _validate_google_item(self, item):
+        self.ensure_one()
+        if item.get("mimeType") != GOOGLE_FOLDER_MIME_TYPE:
+            raise UserError(
+                _("Google Drive item %(gid)s is not a folder.", gid=self.gid)
+            )
 
     def action_refresh_meta(self):
         for folder in self:
