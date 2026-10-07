@@ -32,24 +32,38 @@ export class GoogleDriveExplorerField extends Component {
             isHome: true,
         });
 
-        onWillStart(() => this.initialize(this.props.record.resId));
+        onWillStart(() => this.initialize(this._rootId(this.props)));
         onWillUpdateProps((nextProps) => {
-            if (nextProps.record.resId !== this.props.record.resId) {
-                return this.initialize(nextProps.record.resId);
+            const nextRootId = this._rootId(nextProps);
+            if (nextRootId !== this.rootId) {
+                return this.initialize(nextRootId);
             }
         });
     }
 
     async initialize(rootId) {
+        this.rootId = rootId || false;
         if (!rootId) {
+            this.navigator = null;
             this.state.loading = false;
             this.state.folder = null;
             this.state.items = [];
+            this._syncNavigationState();
             return;
         }
         this.navigator = new ExplorerNavigator(rootId);
         this._syncNavigationState();
         await this._loadFolder(rootId);
+    }
+
+    _rootId(props) {
+        const field = props.record.fields[props.name];
+        if (field.type === "many2one") {
+            return props.record.data[props.name]?.id || false;
+        }
+        return props.record.resModel === "o3p.google.drive.item"
+            ? props.record.resId
+            : false;
     }
 
     async _loadFolder(folderId) {
@@ -152,5 +166,5 @@ export class GoogleDriveExplorerField extends Component {
 
 registry.category("fields").add("o3p_google_drive_explorer", {
     component: GoogleDriveExplorerField,
-    supportedTypes: ["char"],
+    supportedTypes: ["char", "many2one"],
 });
