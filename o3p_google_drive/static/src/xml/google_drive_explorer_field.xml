@@ -9,19 +9,21 @@
                             title="Back"
                             t-att-disabled="!this.state.canGoBack || this.state.loading"
                             t-on-click="this.onBack">
-                        <i class="fa fa-arrow-left" aria-hidden="true"/>
+                        <i class="oi oi-fw" data-icon="arrow_back" aria-hidden="true"/>
                     </button>
                     <button type="button"
                             class="btn btn-light"
                             title="Home"
                             t-att-disabled="this.state.isHome || this.state.loading"
                             t-on-click="this.onHome">
-                        <i class="fa fa-home" aria-hidden="true"/>
+                        <i class="oi oi-fw" data-icon="home" aria-hidden="true"/>
                     </button>
                 </div>
 
                 <div class="o_o3p_drive_explorer_location text-truncate">
-                    <i class="fa fa-folder-open me-2" aria-hidden="true"/>
+                    <i class="oi oi-fw oi-filled me-2"
+                       data-icon="folder"
+                       aria-hidden="true"/>
                     <span t-out="this.state.folder ? this.state.folder.name : 'Explorer'"/>
                 </div>
 
@@ -30,19 +32,23 @@
                             title="Details view"
                             t-attf-class="btn btn-light {{ this.state.viewMode === 'details' ? 'active' : '' }}"
                             t-on-click="this.onSetDetailsView">
-                        <i class="fa fa-list" aria-hidden="true"/>
+                        <i class="oi oi-fw"
+                           data-icon="format_list_bulleted"
+                           aria-hidden="true"/>
                     </button>
                     <button type="button"
                             title="Thumbnail and icon view"
                             t-attf-class="btn btn-light {{ this.state.viewMode === 'icons' ? 'active' : '' }}"
                             t-on-click="this.onSetIconsView">
-                        <i class="fa fa-th-large" aria-hidden="true"/>
+                        <i class="oi oi-fw" data-icon="grid_view" aria-hidden="true"/>
                     </button>
                 </div>
             </header>
 
             <div t-if="this.state.loading" class="o_o3p_drive_explorer_loading">
-                <i class="fa fa-spinner fa-spin me-2" aria-hidden="true"/>
+                <i class="oi oi-fw oi-spin me-2"
+                   data-icon="autorenew"
+                   aria-hidden="true"/>
                 Loading folder…
             </div>
 
@@ -78,10 +84,12 @@
                                          t-att-src="item.thumbnail_url"
                                          t-att-alt="item.name"/>
                                     <i t-elif="item.thumbnail_loading"
-                                       class="fa fa-spinner fa-spin text-muted"
+                                       class="oi oi-fw oi-spin text-muted"
+                                       data-icon="autorenew"
                                        aria-hidden="true"/>
                                     <i t-else=""
-                                       t-att-class="item.is_folder ? 'fa fa-folder text-warning' : 'fa fa-file-o text-muted'"
+                                       t-att-class="item.is_folder ? 'oi oi-fw oi-filled text-warning' : 'oi oi-fw oi-filled text-muted'"
+                                       t-att-data-icon="item.is_folder ? 'folder' : item.mime_type.startsWith('image/') ? 'image' : item.mime_type.startsWith('video/') ? 'videocam' : 'article'"
                                        aria-hidden="true"/>
                                     <span class="ms-2" t-out="item.name"/>
                                 </button>
@@ -96,7 +104,9 @@
                                         aria-label="Item actions"
                                         t-att-data-item-id="item.id"
                                         t-on-click.stop="this.onToggleContext">
-                                    <i class="fa fa-ellipsis-v" aria-hidden="true"/>
+                                    <i class="oi oi-fw"
+                                       data-icon="more_vert"
+                                       aria-hidden="true"/>
                                 </button>
                                 <div t-if="this.state.contextItemId === item.id"
                                      class="o_o3p_drive_explorer_context_menu">
@@ -123,12 +133,17 @@
                                  t-att-src="item.thumbnail_url"
                                  t-att-alt="item.name"/>
                             <i t-elif="item.thumbnail_loading"
-                               class="fa fa-spinner fa-spin text-muted"
+                               class="oi oi-fw oi-spin text-muted"
+                               data-icon="autorenew"
                                aria-hidden="true"/>
                             <i t-elif="item.is_folder"
-                               class="fa fa-folder text-warning"
+                               class="oi oi-fw oi-filled text-warning"
+                               data-icon="folder"
                                aria-hidden="true"/>
-                            <i t-else="" class="fa fa-file-o text-muted" aria-hidden="true"/>
+                            <i t-else=""
+                               class="oi oi-fw oi-filled text-muted"
+                               t-att-data-icon="item.mime_type.startsWith('image/') ? 'image' : item.mime_type.startsWith('video/') ? 'videocam' : 'article'"
+                               aria-hidden="true"/>
                         </span>
                         <span class="o_o3p_drive_explorer_card_name" t-out="item.name"/>
                     </button>
@@ -138,7 +153,7 @@
                             aria-label="Item actions"
                             t-att-data-item-id="item.id"
                             t-on-click.stop="this.onToggleContext">
-                        <i class="fa fa-ellipsis-v" aria-hidden="true"/>
+                        <i class="oi oi-fw" data-icon="more_vert" aria-hidden="true"/>
                     </button>
                     <div t-if="this.state.contextItemId === item.id"
                          class="o_o3p_drive_explorer_context_menu">
