@@ -9,6 +9,7 @@
                   decoration-muted="trashed">
                 <field name="name"/>
                 <field name="gid"/>
+                <field name="is_starting_point" optional="show"/>
                 <field name="mime_type" optional="show"/>
                 <field name="drive_id" optional="show"/>
                 <field name="parent_gids" optional="hide"/>
@@ -41,6 +42,7 @@
                     <group>
                         <group string="Google Drive">
                             <field name="gid"/>
+                            <field name="is_starting_point"/>
                             <field name="mime_type" readonly="1"/>
                             <field name="drive_id" readonly="1"/>
                             <field name="parent_gids" readonly="1"/>
@@ -69,6 +71,9 @@
         <field name="arch" type="xml">
             <search string="Google Drive Items">
                 <field name="gid"/>
+                <filter name="starting_points"
+                        string="Starting Points"
+                        domain="[('is_starting_point', '=', True)]"/>
             </search>
         </field>
     </record>
@@ -78,6 +83,7 @@
         <field name="res_model">o3p.google.drive.item</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="google_drive_item_view_search"/>
+        <field name="context">{'default_is_starting_point': True}</field>
     </record>
 
     <menuitem id="menu_o3p_google_drive_technical"

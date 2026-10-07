@@ -38,6 +38,12 @@ class GoogleDriveItem(models.Model):
             "the 'item' key and its retrieval time under 'fetched_at'."
         ),
     )
+    is_starting_point = fields.Boolean(
+        string="Starting Point",
+        default=False,
+        required=True,
+        help="Marks an item as a starting point for Google Drive traversal.",
+    )
 
     name = fields.Char(compute="_compute_virtual_fields")
     mime_type = fields.Char(compute="_compute_virtual_fields")
@@ -53,6 +59,14 @@ class GoogleDriveItem(models.Model):
         "UNIQUE (gid)",
         "Each Google Drive item can only be registered once.",
     )
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            ALTER TABLE o3p_google_drive_item
+            ALTER COLUMN is_starting_point SET DEFAULT FALSE
+            """
+        )
 
     @api.depends("gid", "meta")
     def _compute_virtual_fields(self):
