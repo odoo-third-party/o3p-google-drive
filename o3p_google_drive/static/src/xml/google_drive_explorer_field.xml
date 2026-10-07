@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates xml:space="preserve">
     <t t-name="o3p_google_drive.GoogleDriveExplorerField">
-        <section class="o_o3p_drive_explorer" aria-label="Google Drive explorer">
+        <section class="o_o3p_drive_explorer"
+                 aria-label="Google Drive explorer"
+                 t-att-style="this.explorerStyle">
             <header class="o_o3p_drive_explorer_toolbar">
                 <div class="btn-group" role="group" aria-label="Folder navigation">
                     <button type="button"

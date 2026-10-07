@@ -1,6 +1,11 @@
 .o_o3p_drive_explorer {
-    min-height: 24rem;
-    overflow: visible;
+    display: flex;
+    width: 100%;
+    max-width: none;
+    height: var(--o-o3p-drive-explorer-height, 40vh);
+    min-height: 16rem;
+    flex-direction: column;
+    overflow: hidden;
     border: 1px solid var(--border-color, #dee2e6);
     border-radius: 0.5rem;
     background: var(--body-bg, #fff);
@@ -11,6 +16,7 @@
     align-items: center;
     gap: 0.75rem;
     min-height: 3.5rem;
+    flex: 0 0 auto;
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid var(--border-color, #dee2e6);
     background: rgba(0, 0, 0, 0.025);
@@ -24,10 +30,18 @@
 .o_o3p_drive_explorer_loading,
 .o_o3p_drive_explorer_empty {
     display: flex;
-    min-height: 18rem;
+    min-height: 0;
+    flex: 1 1 auto;
     align-items: center;
     justify-content: center;
     color: var(--secondary-color, #6c757d);
+}
+
+.o_o3p_drive_explorer > .table-responsive,
+.o_o3p_drive_explorer > .o_o3p_drive_explorer_grid {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: auto;
 }
 
 .o_o3p_drive_explorer_table {
@@ -97,6 +111,7 @@
     grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
     gap: 0.75rem;
     padding: 1rem;
+    align-content: start;
 }
 
 .o_o3p_drive_explorer_card {

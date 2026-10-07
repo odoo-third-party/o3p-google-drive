@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { registry } from "@web/core/registry";
+import { _t } from "@web/core/l10n/translation";
 import { useService } from "@web/core/utils/hooks";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
 import {
@@ -8,6 +9,7 @@ import {
     onWillStart,
     onWillUpdateProps,
     proxy,
+    t,
     useProps,
 } from "@odoo/owl";
 
@@ -16,7 +18,10 @@ import { EXPLORER_VIEW_MODES, ExplorerNavigator } from "./explorer";
 export class GoogleDriveExplorerField extends Component {
     static template = "o3p_google_drive.GoogleDriveExplorerField";
 
-    props = useProps(standardFieldProps);
+    props = useProps({
+        ...standardFieldProps,
+        height: t.string().optional("40vh"),
+    });
 
     setup() {
         this.orm = useService("orm");
@@ -217,9 +222,25 @@ export class GoogleDriveExplorerField extends Component {
         const value = bytes / 1024 ** unitIndex;
         return `${value.toFixed(unitIndex ? 1 : 0)} ${units[unitIndex]}`;
     }
+
+    get explorerStyle() {
+        return `--o-o3p-drive-explorer-height: ${this.props.height};`;
+    }
 }
 
 registry.category("fields").add("o3p_google_drive_explorer", {
     component: GoogleDriveExplorerField,
+    additionalClasses: ["w-100"],
+    supportedOptions: [
+        {
+            label: _t("Explorer height"),
+            name: "height",
+            type: "string",
+            default: "40vh",
+        },
+    ],
     supportedTypes: ["char", "many2one"],
+    extractProps: ({ options }) => ({
+        height: options.height || "40vh",
+    }),
 });
