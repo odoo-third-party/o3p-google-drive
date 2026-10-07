@@ -5,7 +5,7 @@
         "O3P Google Drive provides the configuration and services needed to connect "
         "Odoo with Google Drive."
     ),
-    "version": "20.0.1.9.2",
+    "version": "20.0.2.0.0",
     "category": "Productivity/Documents",
     "author": "O3P",
     "website": "https://github.com/odoo-third-party/o3p-google-drive",
@@ -25,4 +25,12 @@
     "application": False,
     "auto_install": False,
     "sequence": 1,
+    "assets": {
+        "web.assets_backend": [
+            "o3p_google_drive/static/src/js/explorer.js",
+            "o3p_google_drive/static/src/js/google_drive_explorer_field.js",
+            "o3p_google_drive/static/src/xml/google_drive_explorer_field.xml",
+            "o3p_google_drive/static/src/scss/google_drive_explorer.scss",
+        ],
+    },
 }

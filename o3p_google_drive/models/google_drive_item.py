@@ -217,6 +217,71 @@ class GoogleDriveItem(models.Model):
             item._refresh_descendants(access_token, visited_gids)
         return True
 
+    @api.model
+    def get_explorer_folder(self, folder_id):
+        folder = self.browse(int(folder_id)).exists()
+        if not folder:
+            raise UserError(_("The Google Drive folder no longer exists."))
+        folder.check_access("read")
+        if folder.mime_type != GOOGLE_FOLDER_MIME_TYPE:
+            raise UserError(_("The explorer can only navigate Google Drive folders."))
+
+        self.env.cr.execute(
+            """
+            SELECT id
+              FROM o3p_google_drive_item
+             WHERE COALESCE(trashed, FALSE) = FALSE
+               AND parent_gids @> %s::jsonb
+            """,
+            [json.dumps([folder.gid])],
+        )
+        child_ids = [row[0] for row in self.env.cr.fetchall()]
+        children = self.search([("id", "in", child_ids)])
+        children = children.sorted(
+            key=lambda item: (
+                item.mime_type != GOOGLE_FOLDER_MIME_TYPE,
+                (item.name or item.gid or "").casefold(),
+                item.id,
+            )
+        )
+
+        thumbnails = self.env["o3p.google.drive.thumbnail"].search(
+            [("item_id", "in", children.ids)]
+        )
+        thumbnail_by_item = {thumbnail.item_id.id: thumbnail for thumbnail in thumbnails}
+
+        return {
+            "folder": self._explorer_item_values(folder),
+            "items": [
+                self._explorer_item_values(
+                    item,
+                    thumbnail=thumbnail_by_item.get(item.id),
+                )
+                for item in children
+            ],
+        }
+
+    @api.model
+    def _explorer_item_values(self, item, thumbnail=None):
+        meta = item.meta if isinstance(item.meta, dict) else {}
+        google_item = meta.get("item") if isinstance(meta.get("item"), dict) else {}
+        return {
+            "id": item.id,
+            "gid": item.gid,
+            "name": item.name or item.gid,
+            "mime_type": item.mime_type or "",
+            "is_folder": item.mime_type == GOOGLE_FOLDER_MIME_TYPE,
+            "modified_time": fields.Datetime.to_string(item.modified_time)
+            if item.modified_time
+            else False,
+            "size": int(google_item.get("size") or 0),
+            "thumbnail_url": (
+                f"/web/image/o3p.google.drive.thumbnail/{thumbnail.id}/image"
+                if thumbnail
+                else False
+            ),
+        }
+
     def _refresh_descendants(self, access_token, visited_gids=None):
         self.ensure_one()
         visited_gids = visited_gids if visited_gids is not None else set()

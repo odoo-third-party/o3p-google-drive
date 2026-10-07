@@ -60,6 +60,14 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Explorer"
+                              name="explorer"
+                              invisible="mime_type != 'application/vnd.google-apps.folder'">
+                            <field name="gid"
+                                   widget="o3p_google_drive_explorer"
+                                   nolabel="1"
+                                   readonly="1"/>
+                        </page>
                         <page string="Raw Metadata" name="raw_metadata">
                             <field name="meta" nolabel="1"/>
                         </page>
