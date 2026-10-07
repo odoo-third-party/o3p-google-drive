@@ -262,6 +262,64 @@ class GoogleDriveItem(models.Model):
         }
 
     @api.model
+    def generate_explorer_thumbnails(self, item_ids):
+        items = self.browse([int(item_id) for item_id in item_ids]).exists()
+        items.check_access("read")
+        thumbnail_model = self.env["o3p.google.drive.thumbnail"]
+        thumbnails = thumbnail_model.search([("item_id", "in", items.ids)])
+        thumbnail_by_item = {thumbnail.item_id.id: thumbnail for thumbnail in thumbnails}
+        supported_items = items.filtered(
+            lambda item: (item.mime_type or "").startswith(("image/", "video/"))
+        )
+        missing_items = supported_items.filtered(
+            lambda item: item.id not in thumbnail_by_item
+        )
+        if missing_items:
+            access_token = self._get_google_access_token()
+        else:
+            access_token = False
+
+        for item in missing_items:
+            try:
+                with self.env.cr.savepoint():
+                    meta = item._refresh_meta(access_token=access_token)
+                    google_item = meta.get("item", {})
+                    mime_type = google_item.get("mimeType") or ""
+                    if mime_type.startswith("image/"):
+                        thumbnail = thumbnail_model._refresh_image_thumbnail(
+                            item,
+                            google_item,
+                            access_token,
+                        )
+                    elif mime_type.startswith("video/"):
+                        thumbnail = thumbnail_model._refresh_video_thumbnail(
+                            item,
+                            google_item,
+                            access_token,
+                        )
+                    else:
+                        continue
+                    thumbnail_by_item[item.id] = thumbnail
+            except Exception:
+                _logger.warning(
+                    "Could not generate an explorer thumbnail for Google Drive item %s.",
+                    item.gid,
+                    exc_info=True,
+                )
+
+        return [
+            {
+                "item_id": item.id,
+                "thumbnail_url": (
+                    f"/web/image/o3p.google.drive.thumbnail/"
+                    f"{thumbnail_by_item[item.id].id}/image"
+                ),
+            }
+            for item in supported_items
+            if item.id in thumbnail_by_item
+        ]
+
+    @api.model
     def _explorer_item_values(self, item, thumbnail=None):
         meta = item.meta if isinstance(item.meta, dict) else {}
         google_item = meta.get("item") if isinstance(meta.get("item"), dict) else {}

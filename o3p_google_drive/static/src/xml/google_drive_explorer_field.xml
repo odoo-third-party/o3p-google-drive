@@ -77,6 +77,9 @@
                                          class="o_o3p_drive_explorer_detail_thumb"
                                          t-att-src="item.thumbnail_url"
                                          t-att-alt="item.name"/>
+                                    <i t-elif="item.thumbnail_loading"
+                                       class="fa fa-spinner fa-spin text-muted"
+                                       aria-hidden="true"/>
                                     <i t-else=""
                                        t-att-class="item.is_folder ? 'fa fa-folder text-warning' : 'fa fa-file-o text-muted'"
                                        aria-hidden="true"/>
@@ -119,6 +122,9 @@
                             <img t-if="item.thumbnail_url"
                                  t-att-src="item.thumbnail_url"
                                  t-att-alt="item.name"/>
+                            <i t-elif="item.thumbnail_loading"
+                               class="fa fa-spinner fa-spin text-muted"
+                               aria-hidden="true"/>
                             <i t-elif="item.is_folder"
                                class="fa fa-folder text-warning"
                                aria-hidden="true"/>

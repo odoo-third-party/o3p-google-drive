@@ -22,6 +22,7 @@ export class GoogleDriveExplorerField extends Component {
         this.orm = useService("orm");
         this.notification = useService("notification");
         this.navigator = null;
+        this.pendingThumbnailIds = new Set();
         this.state = proxy({
             loading: true,
             folder: null,
@@ -77,6 +78,7 @@ export class GoogleDriveExplorerField extends Component {
             );
             this.state.folder = payload.folder;
             this.state.items = payload.items;
+            this._scheduleMissingThumbnails(payload.items);
             return true;
         } catch (error) {
             this.notification.add(error.message || "Could not load this Google Drive folder.", {
@@ -86,6 +88,59 @@ export class GoogleDriveExplorerField extends Component {
         } finally {
             this.state.loading = false;
         }
+    }
+
+    _scheduleMissingThumbnails(items) {
+        const missingItems = items.filter(
+            (item) =>
+                !item.thumbnail_url &&
+                (item.mime_type.startsWith("image/") ||
+                    item.mime_type.startsWith("video/")) &&
+                !this.pendingThumbnailIds.has(item.id)
+        );
+        if (!missingItems.length) {
+            return;
+        }
+
+        for (const item of missingItems) {
+            this.pendingThumbnailIds.add(item.id);
+        }
+        const missingIds = new Set(missingItems.map((item) => item.id));
+        this.state.items = this.state.items.map((item) =>
+            missingIds.has(item.id) ? { ...item, thumbnail_loading: true } : item
+        );
+
+        this.orm
+            .call(
+                "o3p.google.drive.item",
+                "generate_explorer_thumbnails",
+                [missingItems.map((item) => item.id)]
+            )
+            .then((generated) => {
+                const thumbnailByItem = new Map(
+                    generated.map((result) => [result.item_id, result.thumbnail_url])
+                );
+                this.state.items = this.state.items.map((item) =>
+                    thumbnailByItem.has(item.id)
+                        ? {
+                              ...item,
+                              thumbnail_url: thumbnailByItem.get(item.id),
+                              thumbnail_loading: false,
+                          }
+                        : item
+                );
+            })
+            .catch(() => {})
+            .finally(() => {
+                for (const itemId of missingIds) {
+                    this.pendingThumbnailIds.delete(itemId);
+                }
+                this.state.items = this.state.items.map((item) =>
+                    missingIds.has(item.id)
+                        ? { ...item, thumbnail_loading: false }
+                        : item
+                );
+            });
     }
 
     async onOpenItem(event) {
