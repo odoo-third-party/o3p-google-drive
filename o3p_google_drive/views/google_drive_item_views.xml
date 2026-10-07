@@ -80,6 +80,12 @@
         <field name="search_view_id" ref="google_drive_item_view_search"/>
     </record>
 
+    <menuitem id="menu_o3p_google_drive_technical"
+              name="O3P Google Drive"
+              parent="base.menu_custom"
+              groups="base.group_system"
+              sequence="90"/>
+
     <menuitem id="menu_o3p_google_drive_item"
               name="Items"
               parent="menu_o3p_google_drive_technical"
