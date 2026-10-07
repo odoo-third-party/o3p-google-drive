@@ -7,54 +7,54 @@
                     <button type="button"
                             class="btn btn-light"
                             title="Back"
-                            t-att-disabled="!state.canGoBack || state.loading"
-                            t-on-click="onBack">
+                            t-att-disabled="!this.state.canGoBack || this.state.loading"
+                            t-on-click="this.onBack">
                         <i class="fa fa-arrow-left" aria-hidden="true"/>
                     </button>
                     <button type="button"
                             class="btn btn-light"
                             title="Home"
-                            t-att-disabled="state.isHome || state.loading"
-                            t-on-click="onHome">
+                            t-att-disabled="this.state.isHome || this.state.loading"
+                            t-on-click="this.onHome">
                         <i class="fa fa-home" aria-hidden="true"/>
                     </button>
                 </div>
 
                 <div class="o_o3p_drive_explorer_location text-truncate">
                     <i class="fa fa-folder-open me-2" aria-hidden="true"/>
-                    <span t-out="state.folder ? state.folder.name : 'Explorer'"/>
+                    <span t-out="this.state.folder ? this.state.folder.name : 'Explorer'"/>
                 </div>
 
                 <div class="btn-group ms-auto" role="group" aria-label="View mode">
                     <button type="button"
                             title="Details view"
-                            t-attf-class="btn btn-light {{ state.viewMode === 'details' ? 'active' : '' }}"
-                            t-on-click="onSetDetailsView">
+                            t-attf-class="btn btn-light {{ this.state.viewMode === 'details' ? 'active' : '' }}"
+                            t-on-click="this.onSetDetailsView">
                         <i class="fa fa-list" aria-hidden="true"/>
                     </button>
                     <button type="button"
                             title="Thumbnail and icon view"
-                            t-attf-class="btn btn-light {{ state.viewMode === 'icons' ? 'active' : '' }}"
-                            t-on-click="onSetIconsView">
+                            t-attf-class="btn btn-light {{ this.state.viewMode === 'icons' ? 'active' : '' }}"
+                            t-on-click="this.onSetIconsView">
                         <i class="fa fa-th-large" aria-hidden="true"/>
                     </button>
                 </div>
             </header>
 
-            <div t-if="state.loading" class="o_o3p_drive_explorer_loading">
+            <div t-if="this.state.loading" class="o_o3p_drive_explorer_loading">
                 <i class="fa fa-spinner fa-spin me-2" aria-hidden="true"/>
                 Loading folder…
             </div>
 
-            <div t-elif="!state.folder" class="o_o3p_drive_explorer_empty">
+            <div t-elif="!this.state.folder" class="o_o3p_drive_explorer_empty">
                 Save this Google Drive item to initialize the explorer.
             </div>
 
-            <div t-elif="!state.items.length" class="o_o3p_drive_explorer_empty">
+            <div t-elif="!this.state.items.length" class="o_o3p_drive_explorer_empty">
                 This folder has no synchronized items.
             </div>
 
-            <div t-elif="state.viewMode === 'details'" class="table-responsive">
+            <div t-elif="this.state.viewMode === 'details'" class="table-responsive">
                 <table class="table table-hover table-sm o_o3p_drive_explorer_table">
                     <thead>
                         <tr>
@@ -66,13 +66,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr t-foreach="state.items" t-as="item" t-key="item.id">
+                        <tr t-foreach="this.state.items" t-as="item" t-key="item.id">
                             <td>
                                 <button type="button"
                                         class="btn btn-link o_o3p_drive_explorer_name"
                                         t-att-class="item.is_folder ? 'btn btn-link o_o3p_drive_explorer_name o_is_folder' : 'btn btn-link o_o3p_drive_explorer_name'"
                                         t-att-data-item-id="item.id"
-                                        t-on-click="onOpenItem">
+                                        t-on-click="this.onOpenItem">
                                     <img t-if="item.thumbnail_url"
                                          class="o_o3p_drive_explorer_detail_thumb"
                                          t-att-src="item.thumbnail_url"
@@ -85,17 +85,17 @@
                             </td>
                             <td t-out="item.mime_type"/>
                             <td t-out="item.modified_time || ''"/>
-                            <td class="text-end" t-out="formatSize(item.size)"/>
+                            <td class="text-end" t-out="this.formatSize(item.size)"/>
                             <td class="o_o3p_drive_explorer_context_cell">
                                 <button type="button"
                                         class="btn btn-link btn-sm"
                                         title="Item actions"
                                         aria-label="Item actions"
                                         t-att-data-item-id="item.id"
-                                        t-on-click.stop="onToggleContext">
+                                        t-on-click.stop="this.onToggleContext">
                                     <i class="fa fa-ellipsis-v" aria-hidden="true"/>
                                 </button>
-                                <div t-if="state.contextItemId === item.id"
+                                <div t-if="this.state.contextItemId === item.id"
                                      class="o_o3p_drive_explorer_context_menu">
                                     <span>Actions for this MIME type will appear here.</span>
                                 </div>
@@ -106,7 +106,7 @@
             </div>
 
             <div t-else="" class="o_o3p_drive_explorer_grid">
-                <article t-foreach="state.items"
+                <article t-foreach="this.state.items"
                          t-as="item"
                          t-key="item.id"
                          class="o_o3p_drive_explorer_card">
@@ -114,7 +114,7 @@
                             class="o_o3p_drive_explorer_card_open"
                             t-att-class="item.is_folder ? 'o_o3p_drive_explorer_card_open o_is_folder' : 'o_o3p_drive_explorer_card_open'"
                             t-att-data-item-id="item.id"
-                            t-on-click="onOpenItem">
+                            t-on-click="this.onOpenItem">
                         <span class="o_o3p_drive_explorer_card_visual">
                             <img t-if="item.thumbnail_url"
                                  t-att-src="item.thumbnail_url"
@@ -131,10 +131,10 @@
                             title="Item actions"
                             aria-label="Item actions"
                             t-att-data-item-id="item.id"
-                            t-on-click.stop="onToggleContext">
+                            t-on-click.stop="this.onToggleContext">
                         <i class="fa fa-ellipsis-v" aria-hidden="true"/>
                     </button>
-                    <div t-if="state.contextItemId === item.id"
+                    <div t-if="this.state.contextItemId === item.id"
                          class="o_o3p_drive_explorer_context_menu">
                         <span>Actions for this MIME type will appear here.</span>
                     </div>
