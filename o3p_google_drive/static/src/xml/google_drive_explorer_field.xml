@@ -133,7 +133,7 @@
                                 </button>
                                 <div t-if="this.state.contextItemId === item.id"
                                      class="o_o3p_drive_explorer_context_menu">
-                                    <button t-if="item.is_folder &amp;&amp; item.web_view_link"
+                                    <button t-if="item.web_view_link"
                                             type="button"
                                             class="dropdown-item"
                                             t-att-data-item-id="item.id"
@@ -190,7 +190,7 @@
                     </button>
                     <div t-if="this.state.contextItemId === item.id"
                          class="o_o3p_drive_explorer_context_menu">
-                        <button t-if="item.is_folder &amp;&amp; item.web_view_link"
+                        <button t-if="item.web_view_link"
                                 type="button"
                                 class="dropdown-item"
                                 t-att-data-item-id="item.id"
