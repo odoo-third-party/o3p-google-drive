@@ -1,0 +1,2 @@
+id,name,model_id,group_id/id,operation,domain
+access_o3p_google_drive_folder_system,o3p.google.drive.folder system,o3p.google.drive.folder,base.group_system,crud,
