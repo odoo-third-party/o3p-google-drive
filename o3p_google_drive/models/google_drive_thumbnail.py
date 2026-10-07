@@ -7,6 +7,7 @@ from urllib.parse import quote
 
 import requests
 from PIL import Image, ImageOps
+from PIL import WebPImagePlugin  # noqa: F401 - registers WEBP save support
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
