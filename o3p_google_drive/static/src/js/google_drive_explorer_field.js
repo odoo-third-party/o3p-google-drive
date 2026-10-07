@@ -22,6 +22,7 @@ export class GoogleDriveExplorerField extends Component {
     props = useProps({
         ...standardFieldProps,
         height: t.string().optional("40vh"),
+        contactImageAction: t.string().optional(),
     });
 
     setup() {
@@ -39,6 +40,7 @@ export class GoogleDriveExplorerField extends Component {
             canGoBack: false,
             isHome: true,
             isExpanded: false,
+            settingContactImageItemId: false,
         });
 
         onWillStart(() => this.initialize(this._rootId(this.props)));
@@ -229,6 +231,38 @@ export class GoogleDriveExplorerField extends Component {
         this._openInGoogleDrive(item?.web_view_link);
     }
 
+    canSetContactImage(item) {
+        return Boolean(
+            this.props.contactImageAction &&
+            this.props.record.resId &&
+            item?.mime_type?.startsWith("image/")
+        );
+    }
+
+    async onSetContactImage(event) {
+        const item = this._itemFromEvent(event);
+        if (!this.canSetContactImage(item) || this.state.settingContactImageItemId) {
+            return;
+        }
+        this.state.contextItemId = false;
+        this.state.settingContactImageItemId = item.id;
+        try {
+            await this.orm.call(
+                this.props.record.resModel,
+                this.props.contactImageAction,
+                [[this.props.record.resId], item.id]
+            );
+            await this.props.record.load();
+            this.notification.add(_t("Contact image updated."), { type: "success" });
+        } catch (error) {
+            this.notification.add(error.message || _t("Could not update the contact image."), {
+                type: "danger",
+            });
+        } finally {
+            this.state.settingContactImageItemId = false;
+        }
+    }
+
     _openInGoogleDrive(url) {
         if (url) {
             browser.open(url, "_blank");
@@ -282,9 +316,15 @@ registry.category("fields").add("o3p_google_drive_explorer", {
             type: "string",
             default: "40vh",
         },
+        {
+            label: _t("Set contact image method"),
+            name: "contact_image_action",
+            type: "string",
+        },
     ],
     supportedTypes: ["char", "many2one"],
     extractProps: ({ options }) => ({
         height: options.height || "40vh",
+        contactImageAction: options.contact_image_action,
     }),
 });

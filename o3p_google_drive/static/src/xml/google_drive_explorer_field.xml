@@ -133,6 +133,17 @@
                                 </button>
                                 <div t-if="this.state.contextItemId === item.id"
                                      class="o_o3p_drive_explorer_context_menu">
+                                    <button t-if="this.canSetContactImage(item)"
+                                            type="button"
+                                            class="dropdown-item"
+                                            t-att-disabled="this.state.settingContactImageItemId === item.id"
+                                            t-att-data-item-id="item.id"
+                                            t-on-click="this.onSetContactImage">
+                                        <i class="oi oi-fw me-2"
+                                           data-icon="person"
+                                           aria-hidden="true"/>
+                                        Set as contact image
+                                    </button>
                                     <button t-if="item.web_view_link"
                                             type="button"
                                             class="dropdown-item"
@@ -143,7 +154,7 @@
                                            aria-hidden="true"/>
                                         Open in Google Drive
                                     </button>
-                                    <span t-else="">Actions for this MIME type will appear here.</span>
+                                    <span t-if="!item.web_view_link &amp;&amp; !this.canSetContactImage(item)">Actions for this MIME type will appear here.</span>
                                 </div>
                             </td>
                         </tr>
@@ -190,6 +201,17 @@
                     </button>
                     <div t-if="this.state.contextItemId === item.id"
                          class="o_o3p_drive_explorer_context_menu">
+                        <button t-if="this.canSetContactImage(item)"
+                                type="button"
+                                class="dropdown-item"
+                                t-att-disabled="this.state.settingContactImageItemId === item.id"
+                                t-att-data-item-id="item.id"
+                                t-on-click="this.onSetContactImage">
+                            <i class="oi oi-fw me-2"
+                               data-icon="person"
+                               aria-hidden="true"/>
+                            Set as contact image
+                        </button>
                         <button t-if="item.web_view_link"
                                 type="button"
                                 class="dropdown-item"
@@ -200,7 +222,7 @@
                                aria-hidden="true"/>
                             Open in Google Drive
                         </button>
-                        <span t-else="">Actions for this MIME type will appear here.</span>
+                        <span t-if="!item.web_view_link &amp;&amp; !this.canSetContactImage(item)">Actions for this MIME type will appear here.</span>
                     </div>
                 </article>
             </div>
