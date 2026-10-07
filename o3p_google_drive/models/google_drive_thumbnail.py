@@ -53,11 +53,24 @@ class GoogleDriveThumbnail(models.Model):
     height = fields.Integer(readonly=True)
     source_modified_time = fields.Datetime(readonly=True)
     refreshed_at = fields.Datetime(readonly=True)
+    is_face = fields.Boolean(
+        string="Face",
+        default=False,
+        required=True,
+    )
 
     _item_unique = models.Constraint(
         "UNIQUE (item_id)",
         "A Google Drive item can only have one thumbnail.",
     )
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            ALTER TABLE o3p_google_drive_thumbnail
+            ALTER COLUMN is_face SET DEFAULT FALSE
+            """
+        )
 
     @api.model
     def _refresh_image_thumbnail(self, item, google_item, access_token):
