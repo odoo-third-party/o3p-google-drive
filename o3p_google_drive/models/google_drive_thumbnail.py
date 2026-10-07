@@ -22,7 +22,7 @@ VIDEO_TAIL_BYTES = 4 * 1024 * 1024
 class GoogleDriveThumbnail(models.Model):
     _name = "o3p.google.drive.thumbnail"
     _description = "Google Drive Thumbnail"
-    _rec_name = "name"
+    _rec_name = "item_id"
     _order = "id desc"
 
     item_id = fields.Many2one(
@@ -31,7 +31,6 @@ class GoogleDriveThumbnail(models.Model):
         index=True,
         ondelete="cascade",
     )
-    name = fields.Char(required=True, readonly=True)
     kind = fields.Selection(
         [("image", "Image"), ("video", "Video")],
         required=True,
@@ -100,7 +99,6 @@ class GoogleDriveThumbnail(models.Model):
         thumbnail, width, height = self._make_webp_thumbnail(image_content)
         values = {
             "item_id": item.id,
-            "name": item.name or item.gid,
             "kind": kind,
             "image": BinaryBytes(thumbnail, filename="thumbnail.webp"),
             "mimetype": "image/webp",

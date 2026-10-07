@@ -6,7 +6,6 @@
         <field name="arch" type="xml">
             <list string="Google Drive Thumbnails" create="0">
                 <field name="image" widget="image"/>
-                <field name="name"/>
                 <field name="item_id"/>
                 <field name="kind"/>
                 <field name="mimetype" optional="show"/>
@@ -28,7 +27,6 @@
                     <group>
                         <field name="image" widget="image" class="oe_avatar"/>
                         <group>
-                            <field name="name"/>
                             <field name="item_id"/>
                             <field name="kind"/>
                             <field name="mimetype"/>
