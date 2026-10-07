@@ -7,8 +7,8 @@ import {
     Component,
     onWillStart,
     onWillUpdateProps,
+    proxy,
     useProps,
-    useState,
 } from "@odoo/owl";
 
 import { EXPLORER_VIEW_MODES, ExplorerNavigator } from "./explorer";
@@ -22,7 +22,7 @@ export class GoogleDriveExplorerField extends Component {
         this.orm = useService("orm");
         this.notification = useService("notification");
         this.navigator = null;
-        this.state = useState({
+        this.state = proxy({
             loading: true,
             folder: null,
             items: [],
