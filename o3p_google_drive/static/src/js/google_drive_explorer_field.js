@@ -29,6 +29,7 @@ export class GoogleDriveExplorerField extends Component {
         this.notification = useService("notification");
         this.navigator = null;
         this.pendingThumbnailIds = new Set();
+        this.attemptedEmptyFolderRefreshIds = new Set();
         this.state = proxy({
             loading: true,
             folder: null,
@@ -51,6 +52,7 @@ export class GoogleDriveExplorerField extends Component {
 
     async initialize(rootId) {
         this.rootId = rootId || false;
+        this.attemptedEmptyFolderRefreshIds.clear();
         if (!rootId) {
             this.navigator = null;
             this.state.loading = false;
@@ -85,6 +87,26 @@ export class GoogleDriveExplorerField extends Component {
             );
             this.state.folder = payload.folder;
             this.state.items = payload.items;
+            if (
+                !payload.items.length &&
+                !this.attemptedEmptyFolderRefreshIds.has(folderId)
+            ) {
+                this.attemptedEmptyFolderRefreshIds.add(folderId);
+                await this.orm.call(
+                    "o3p.google.drive.item",
+                    "refresh_explorer_folder",
+                    [folderId]
+                );
+                const refreshedPayload = await this.orm.call(
+                    "o3p.google.drive.item",
+                    "get_explorer_folder",
+                    [folderId]
+                );
+                this.state.folder = refreshedPayload.folder;
+                this.state.items = refreshedPayload.items;
+                this._scheduleMissingThumbnails(refreshedPayload.items);
+                return true;
+            }
             this._scheduleMissingThumbnails(payload.items);
             return true;
         } catch (error) {

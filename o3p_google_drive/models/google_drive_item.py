@@ -177,6 +177,20 @@ class GoogleDriveItem(models.Model):
         self._refresh_folder_items(access_token)
         return {"type": "ir.actions.client", "tag": "reload"}
 
+    def action_refresh_children(self):
+        access_token = self._get_google_access_token()
+        for item in self:
+            meta = item._refresh_meta(access_token=access_token)
+            if meta.get("item", {}).get("mimeType") != GOOGLE_FOLDER_MIME_TYPE:
+                raise UserError(
+                    _(
+                        "Children refresh is only available for Google Drive folders."
+                    )
+                )
+
+        self._refresh_immediate_children(access_token)
+        return {"type": "ir.actions.client", "tag": "reload"}
+
     def action_deeper_refresh(self):
         access_token = self._get_google_access_token()
         folder_items = self.env["o3p.google.drive.item"]
@@ -208,8 +222,15 @@ class GoogleDriveItem(models.Model):
                     )
                 )
 
-        folder_items._refresh_folder_items(access_token)
+        folder_items._refresh_immediate_children(access_token)
         return {"type": "ir.actions.client", "tag": "reload"}
+
+    def _refresh_immediate_children(self, access_token):
+        for item in self:
+            item.ensure_one()
+            for child_item in item._list_google_children(item.gid, access_token):
+                self._upsert_google_item(child_item)
+        return True
 
     def _refresh_folder_items(self, access_token):
         visited_gids = set()
@@ -260,6 +281,20 @@ class GoogleDriveItem(models.Model):
                 for item in children
             ],
         }
+
+    @api.model
+    def refresh_explorer_folder(self, folder_id):
+        folder = self.browse(int(folder_id)).exists()
+        if not folder:
+            raise UserError(_("The Google Drive folder no longer exists."))
+        folder.check_access("read")
+
+        access_token = self._get_google_access_token()
+        meta = folder._refresh_meta(access_token=access_token)
+        if meta.get("item", {}).get("mimeType") != GOOGLE_FOLDER_MIME_TYPE:
+            raise UserError(_("The explorer can only refresh Google Drive folders."))
+        folder._refresh_immediate_children(access_token)
+        return True
 
     @api.model
     def generate_explorer_thumbnails(self, item_ids):

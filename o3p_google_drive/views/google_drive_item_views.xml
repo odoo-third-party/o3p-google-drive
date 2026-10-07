@@ -31,10 +31,21 @@
                             string="Refresh Metadata"
                             icon="fa-refresh"
                             class="btn-primary"/>
+                    <button name="action_refresh_children"
+                            type="object"
+                            string="Refresh Immediate Children"
+                            icon="fa-level-down"
+                            invisible="mime_type != 'application/vnd.google-apps.folder'"/>
+                    <button name="action_refresh_tree"
+                            type="object"
+                            string="Refresh Full Tree"
+                            icon="fa-sitemap"
+                            invisible="mime_type != 'application/vnd.google-apps.folder'"/>
                     <button name="action_deeper_refresh"
                             type="object"
-                            string="Deeper Refresh"
-                            icon="fa-level-down"/>
+                            string="Refresh Thumbnail"
+                            icon="fa-picture-o"
+                            invisible="mime_type == 'application/vnd.google-apps.folder'"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
