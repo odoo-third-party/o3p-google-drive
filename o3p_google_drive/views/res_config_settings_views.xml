@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.o3p.google.drive</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Google Drive"
+                     string="Google Drive"
+                     name="o3p_google_drive"
+                     groups="base.group_system">
+                    <block title="Google Drive Authentication">
+                        <setting id="o3p_google_drive_credentials"
+                                 string="Google credentials"
+                                 help="OAuth credentials used to connect Odoo to Google Drive.">
+                            <field name="google_drive_credentials_json"
+                                   placeholder='{
+    "type": "authorized_user",
+    "client_id": "...",
+    "client_secret": "...",
+    "refresh_token": "..."
+}'/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
