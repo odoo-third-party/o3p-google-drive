@@ -46,15 +46,15 @@ class GoogleDriveItem(models.Model):
         help="Marks an item as a starting point for Google Drive traversal.",
     )
 
-    name = fields.Char(compute="_compute_virtual_fields")
-    mime_type = fields.Char(compute="_compute_virtual_fields")
-    parent_gids = fields.Json(compute="_compute_virtual_fields")
-    created_time = fields.Datetime(compute="_compute_virtual_fields")
-    modified_time = fields.Datetime(compute="_compute_virtual_fields")
-    trashed = fields.Boolean(compute="_compute_virtual_fields")
-    web_view_link = fields.Char(compute="_compute_virtual_fields")
-    drive_id = fields.Char(compute="_compute_virtual_fields")
-    meta_fetched_at = fields.Datetime(compute="_compute_virtual_fields")
+    name = fields.Char(index=True)
+    mime_type = fields.Char()
+    parent_gids = fields.Json(default=list)
+    created_time = fields.Datetime()
+    modified_time = fields.Datetime()
+    trashed = fields.Boolean(default=False)
+    web_view_link = fields.Char()
+    drive_id = fields.Char()
+    meta_fetched_at = fields.Datetime()
 
     _gid_unique = models.Constraint(
         "UNIQUE (gid)",
@@ -69,53 +69,47 @@ class GoogleDriveItem(models.Model):
             """
         )
 
-    @api.depends("gid", "meta")
-    def _compute_virtual_fields(self):
-        for item_record in self:
-            meta = item_record._get_current_meta()
-            item = meta.get("item") if isinstance(meta, dict) else {}
-            if not isinstance(item, dict):
-                item = {}
+    def read(self, fields=None, load="_classic_read"):
+        self._refresh_stale_items()
+        return super().read(fields=fields, load=load)
 
-            item_record.name = item.get("name") or item_record.gid
-            item_record.mime_type = item.get("mimeType")
-            item_record.parent_gids = item.get("parents") or []
-            item_record.created_time = item_record._google_datetime(
-                item.get("createdTime")
-            )
-            item_record.modified_time = item_record._google_datetime(
-                item.get("modifiedTime")
-            )
-            item_record.trashed = bool(item.get("trashed"))
-            item_record.web_view_link = item.get("webViewLink")
-            item_record.drive_id = item.get("driveId")
-            item_record.meta_fetched_at = item_record._google_datetime(
-                meta.get("fetched_at")
-            )
+    def _refresh_stale_items(self):
+        if self.env.context.get("o3p_google_drive_skip_auto_refresh"):
+            return
 
-    def _get_current_meta(self):
-        self.ensure_one()
-        meta = self.meta if isinstance(self.meta, dict) else {}
-        if not self.gid or not self._is_meta_stale(meta):
-            return meta
+        stale_items = self.filtered(lambda item: item._needs_api_refresh())
+        if not stale_items:
+            return
 
         try:
-            return self._refresh_meta()
+            access_token = self._get_google_access_token()
         except Exception:
             _logger.warning(
-                "Could not refresh Google Drive metadata for item %s; using cached data.",
-                self.gid,
+                "Could not obtain a Google access token while refreshing stale items.",
                 exc_info=True,
             )
-            return meta
+            return
 
-    def _is_meta_stale(self, meta=None):
+        for item in stale_items:
+            try:
+                item.with_context(
+                    o3p_google_drive_skip_auto_refresh=True
+                )._refresh_meta(access_token=access_token)
+            except Exception:
+                _logger.warning(
+                    "Could not refresh stale Google Drive item %s; using stored data.",
+                    item.gid,
+                    exc_info=True,
+                )
+
+    def _needs_api_refresh(self):
         self.ensure_one()
-        meta = meta if isinstance(meta, dict) else {}
-        fetched_at = self._google_datetime(meta.get("fetched_at"))
-        if not fetched_at or not isinstance(meta.get("item"), dict):
+        meta = self.meta if isinstance(self.meta, dict) else {}
+        if not self.gid or not isinstance(meta.get("item"), dict):
             return True
-        return fields.Datetime.now() - fetched_at > timedelta(
+        if not self.write_date:
+            return True
+        return fields.Datetime.now() - self.write_date > timedelta(
             seconds=self._meta_max_age_seconds()
         )
 
@@ -130,20 +124,32 @@ class GoogleDriveItem(models.Model):
     def _refresh_meta(self, access_token=None):
         self.ensure_one()
         item = self._fetch_google_item(access_token=access_token)
-        meta = self._prepare_meta(item, current_meta=self.meta)
-        self.with_context(o3p_google_drive_refreshing_meta=True).write({"meta": meta})
-        return meta
+        values = self._prepare_item_values(item, current_meta=self.meta)
+        self.with_context(o3p_google_drive_skip_auto_refresh=True).write(values)
+        return values["meta"]
 
     @api.model
-    def _prepare_meta(self, item, current_meta=None):
+    def _prepare_item_values(self, item, current_meta=None):
+        fetched_at = fields.Datetime.now()
         meta = dict(current_meta) if isinstance(current_meta, dict) else {}
         meta.update(
             {
-                "fetched_at": fields.Datetime.to_string(fields.Datetime.now()),
+                "fetched_at": fields.Datetime.to_string(fetched_at),
                 "item": item,
             }
         )
-        return meta
+        return {
+            "meta": meta,
+            "name": item.get("name"),
+            "mime_type": item.get("mimeType"),
+            "parent_gids": item.get("parents") or [],
+            "created_time": self._google_datetime(item.get("createdTime")),
+            "modified_time": self._google_datetime(item.get("modifiedTime")),
+            "trashed": bool(item.get("trashed")),
+            "web_view_link": item.get("webViewLink"),
+            "drive_id": item.get("driveId"),
+            "meta_fetched_at": fetched_at,
+        }
 
     def action_refresh_meta(self):
         for item in self:
@@ -187,19 +193,15 @@ class GoogleDriveItem(models.Model):
             raise UserError(_("Google Drive returned an item without an ID."))
 
         existing = self.search([("gid", "=", gid)], limit=1)
-        meta = self._prepare_meta(
+        values = self._prepare_item_values(
             item,
             current_meta=existing.meta if existing else None,
         )
         if existing:
-            existing.write({"meta": meta})
+            existing.with_context(o3p_google_drive_skip_auto_refresh=True).write(values)
             return existing
-        return self.create(
-            {
-                "gid": gid,
-                "meta": meta,
-                "is_starting_point": False,
-            }
+        return self.with_context(o3p_google_drive_skip_auto_refresh=True).create(
+            {"gid": gid, "is_starting_point": False, **values}
         )
 
     @api.model

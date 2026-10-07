@@ -74,6 +74,7 @@
         <field name="model">o3p.google.drive.item</field>
         <field name="arch" type="xml">
             <search string="Google Drive Items">
+                <field name="name"/>
                 <field name="gid"/>
                 <filter name="starting_points"
                         string="Starting Points"
