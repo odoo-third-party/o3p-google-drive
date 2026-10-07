@@ -111,8 +111,8 @@
                                        data-icon="autorenew"
                                        aria-hidden="true"/>
                                     <i t-else=""
-                                       t-att-class="item.is_folder ? 'oi oi-fw oi-filled text-warning' : 'oi oi-fw oi-filled text-muted'"
-                                       t-att-data-icon="item.is_folder ? 'folder' : item.mime_type.startsWith('image/') ? 'image' : item.mime_type.startsWith('video/') ? 'videocam' : 'article'"
+                                       t-att-class="item.is_folder ? 'oi oi-fw oi-filled text-warning' : item.mime_type === 'application/pdf' ? 'oi oi-fw oi-filled text-danger' : 'oi oi-fw oi-filled text-muted'"
+                                       t-att-data-icon="item.is_folder ? 'folder' : item.mime_type === 'application/pdf' ? 'picture_as_pdf' : item.mime_type.startsWith('image/') ? 'image' : item.mime_type.startsWith('video/') ? 'videocam' : 'article'"
                                        aria-hidden="true"/>
                                     <span class="ms-2" t-out="item.name"/>
                                 </button>
@@ -174,8 +174,8 @@
                                data-icon="folder"
                                aria-hidden="true"/>
                             <i t-else=""
-                               class="oi oi-fw oi-filled text-muted"
-                               t-att-data-icon="item.mime_type.startsWith('image/') ? 'image' : item.mime_type.startsWith('video/') ? 'videocam' : 'article'"
+                               t-att-class="item.mime_type === 'application/pdf' ? 'oi oi-fw oi-filled text-danger' : 'oi oi-fw oi-filled text-muted'"
+                               t-att-data-icon="item.mime_type === 'application/pdf' ? 'picture_as_pdf' : item.mime_type.startsWith('image/') ? 'image' : item.mime_type.startsWith('video/') ? 'videocam' : 'article'"
                                aria-hidden="true"/>
                         </span>
                         <span class="o_o3p_drive_explorer_card_name" t-out="item.name"/>
