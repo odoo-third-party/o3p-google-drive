@@ -1,4 +1,3 @@
-import base64
 import io
 
 import requests
@@ -6,6 +5,7 @@ from PIL import Image, ImageOps
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools import BinaryBytes
 
 from .google_drive_item import REQUEST_TIMEOUT
 
@@ -78,7 +78,7 @@ class GoogleDriveThumbnail(models.Model):
             "item_id": item.id,
             "name": item.name or item.gid,
             "kind": "image",
-            "image": base64.b64encode(thumbnail),
+            "image": BinaryBytes(thumbnail, filename="thumbnail.webp"),
             "mimetype": "image/webp",
             "byte_length": len(thumbnail),
             "width": width,
