@@ -87,7 +87,10 @@
         <field name="res_model">o3p.google.drive.item</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="google_drive_item_view_search"/>
-        <field name="context">{'default_is_starting_point': True}</field>
+        <field name="context">{
+            'default_is_starting_point': True,
+            'search_default_starting_points': 1,
+        }</field>
     </record>
 
     <menuitem id="menu_o3p_google_drive_technical"
