@@ -9,6 +9,15 @@
     border: 1px solid var(--border-color, #dee2e6);
     border-radius: 0.5rem;
     background: var(--body-bg, #fff);
+    transition: height 180ms ease;
+
+    &.o_is_expanded {
+        height: calc(
+            var(--o-o3p-drive-explorer-height, 40vh) +
+                var(--o-o3p-drive-explorer-height, 40vh)
+        );
+        height: calc(var(--o-o3p-drive-explorer-height, 40vh) * 2);
+    }
 }
 
 .o_o3p_drive_explorer_toolbar {

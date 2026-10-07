@@ -2,6 +2,7 @@
 <templates xml:space="preserve">
     <t t-name="o3p_google_drive.GoogleDriveExplorerField">
         <section class="o_o3p_drive_explorer"
+                 t-att-class="this.state.isExpanded ? 'o_is_expanded' : ''"
                  aria-label="Google Drive explorer"
                  t-att-style="this.explorerStyle">
             <header class="o_o3p_drive_explorer_toolbar">
@@ -43,6 +44,17 @@
                             t-attf-class="btn btn-light {{ this.state.viewMode === 'icons' ? 'active' : '' }}"
                             t-on-click="this.onSetIconsView">
                         <i class="oi oi-fw" data-icon="grid_view" aria-hidden="true"/>
+                    </button>
+                    <button type="button"
+                            role="switch"
+                            t-att-aria-checked="this.state.isExpanded ? 'true' : 'false'"
+                            t-att-aria-label="this.state.isExpanded ? 'Restore explorer height' : 'Double explorer height'"
+                            t-att-title="this.state.isExpanded ? 'Restore explorer height' : 'Double explorer height'"
+                            t-attf-class="btn btn-light {{ this.state.isExpanded ? 'active' : '' }}"
+                            t-on-click="this.onToggleHeight">
+                        <i class="oi oi-fw"
+                           t-att-data-icon="this.state.isExpanded ? 'fullscreen_exit' : 'expand_content'"
+                           aria-hidden="true"/>
                     </button>
                 </div>
             </header>

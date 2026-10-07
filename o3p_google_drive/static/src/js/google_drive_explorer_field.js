@@ -36,6 +36,7 @@ export class GoogleDriveExplorerField extends Component {
             contextItemId: false,
             canGoBack: false,
             isHome: true,
+            isExpanded: false,
         });
 
         onWillStart(() => this.initialize(this._rootId(this.props)));
@@ -189,6 +190,10 @@ export class GoogleDriveExplorerField extends Component {
     onSetIconsView() {
         this.state.viewMode = EXPLORER_VIEW_MODES.ICONS;
         this.state.contextItemId = false;
+    }
+
+    onToggleHeight() {
+        this.state.isExpanded = !this.state.isExpanded;
     }
 
     onToggleContext(event) {
