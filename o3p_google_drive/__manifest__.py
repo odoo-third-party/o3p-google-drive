@@ -21,9 +21,6 @@
         "views/google_drive_item_views.xml",
         "views/google_drive_thumbnail_views.xml",
     ],
-    "installable": True,
-    "application": False,
-    "auto_install": False,
     "sequence": 1,
     "assets": {
         "web.assets_backend": [
@@ -33,4 +30,7 @@
             "o3p_google_drive/static/src/scss/google_drive_explorer.scss",
         ],
     },
+    'auto_install': False,
+    'installable': True,
+    'application': True,
 }
