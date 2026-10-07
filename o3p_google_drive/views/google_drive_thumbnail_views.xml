@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="ir_cron_thumbnail_queue" model="ir.cron">
+        <field name="name">O3P Google Drive: Process thumbnail queue</field>
+        <field name="model_id" ref="model_o3p_google_drive_thumbnail_job"/>
+        <field name="state">code</field>
+        <field name="code">model._process_queue()</field>
+        <field name="user_id" ref="base.user_root"/>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
     <record id="google_drive_thumbnail_view_list" model="ir.ui.view">
         <field name="name">o3p.google.drive.thumbnail.list</field>
         <field name="model">o3p.google.drive.thumbnail</field>

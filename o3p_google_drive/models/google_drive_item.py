@@ -162,7 +162,7 @@ class GoogleDriveItem(models.Model):
             item._refresh_meta()
         return True
 
-    def action_refresh_tree(self):
+    def action_refresh_tree(self, generate_thumbnails=False):
         access_token = self._get_google_access_token()
         for item in self:
             meta = item._refresh_meta(access_token=access_token)
@@ -174,10 +174,13 @@ class GoogleDriveItem(models.Model):
                     )
                 )
 
-        self._refresh_folder_items(access_token)
+        self._refresh_folder_items(
+            access_token,
+            generate_thumbnails=generate_thumbnails,
+        )
         return {"type": "ir.actions.client", "tag": "reload"}
 
-    def action_refresh_children(self):
+    def action_refresh_children(self, generate_thumbnails=False):
         access_token = self._get_google_access_token()
         for item in self:
             meta = item._refresh_meta(access_token=access_token)
@@ -188,7 +191,10 @@ class GoogleDriveItem(models.Model):
                     )
                 )
 
-        self._refresh_immediate_children(access_token)
+        self._refresh_immediate_children(
+            access_token,
+            generate_thumbnails=generate_thumbnails,
+        )
         return {"type": "ir.actions.client", "tag": "reload"}
 
     def action_deeper_refresh(self):
@@ -225,17 +231,23 @@ class GoogleDriveItem(models.Model):
         folder_items._refresh_immediate_children(access_token)
         return {"type": "ir.actions.client", "tag": "reload"}
 
-    def _refresh_immediate_children(self, access_token):
+    def _refresh_immediate_children(self, access_token, generate_thumbnails=False):
+        children = self.env["o3p.google.drive.item"]
         for item in self:
             item.ensure_one()
             for child_item in item._list_google_children(item.gid, access_token):
-                self._upsert_google_item(child_item)
+                children |= self._upsert_google_item(child_item)
+        if generate_thumbnails:
+            self.env["o3p.google.drive.thumbnail.job"]._enqueue_items(children)
         return True
 
-    def _refresh_folder_items(self, access_token):
+    def _refresh_folder_items(self, access_token, generate_thumbnails=False):
         visited_gids = set()
+        descendants = self.env["o3p.google.drive.item"]
         for item in self:
-            item._refresh_descendants(access_token, visited_gids)
+            descendants |= item._refresh_descendants(access_token, visited_gids)
+        if generate_thumbnails:
+            self.env["o3p.google.drive.thumbnail.job"]._enqueue_items(descendants)
         return True
 
     @api.model
@@ -283,7 +295,7 @@ class GoogleDriveItem(models.Model):
         }
 
     @api.model
-    def refresh_explorer_folder(self, folder_id):
+    def refresh_explorer_folder(self, folder_id, generate_thumbnails=False):
         folder = self.browse(int(folder_id)).exists()
         if not folder:
             raise UserError(_("The Google Drive folder no longer exists."))
@@ -293,7 +305,10 @@ class GoogleDriveItem(models.Model):
         meta = folder._refresh_meta(access_token=access_token)
         if meta.get("item", {}).get("mimeType") != GOOGLE_FOLDER_MIME_TYPE:
             raise UserError(_("The explorer can only refresh Google Drive folders."))
-        folder._refresh_immediate_children(access_token)
+        folder._refresh_immediate_children(
+            access_token,
+            generate_thumbnails=generate_thumbnails,
+        )
         return True
 
     @api.model
@@ -380,6 +395,7 @@ class GoogleDriveItem(models.Model):
         self.ensure_one()
         visited_gids = visited_gids if visited_gids is not None else set()
         pending_parent_gids = [self.gid]
+        descendants = self.env["o3p.google.drive.item"]
 
         while pending_parent_gids:
             parent_gid = pending_parent_gids.pop()
@@ -389,12 +405,13 @@ class GoogleDriveItem(models.Model):
 
             for child_item in self._list_google_children(parent_gid, access_token):
                 child = self._upsert_google_item(child_item)
+                descendants |= child
                 if (
                     child_item.get("mimeType") == GOOGLE_FOLDER_MIME_TYPE
                     and child.gid not in visited_gids
                 ):
                     pending_parent_gids.append(child.gid)
-        return True
+        return descendants
 
     @api.model
     def _upsert_google_item(self, item):

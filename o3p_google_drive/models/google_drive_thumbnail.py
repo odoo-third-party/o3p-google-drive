@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 import shutil
 import subprocess
@@ -16,8 +17,11 @@ from odoo.tools import BinaryBytes
 from .google_drive_item import GOOGLE_DRIVE_API_URL, REQUEST_TIMEOUT
 
 
+_logger = logging.getLogger(__name__)
+
 VIDEO_HEAD_BYTES = 16 * 1024 * 1024
 VIDEO_TAIL_BYTES = 4 * 1024 * 1024
+THUMBNAIL_QUEUE_BATCH_SIZE = 10
 
 
 class GoogleDriveThumbnail(models.Model):
@@ -296,3 +300,130 @@ class GoogleDriveThumbnail(models.Model):
             optimize=True,
         )
         return stream.getvalue(), output.width, output.height
+
+
+class GoogleDriveThumbnailJob(models.Model):
+    _name = "o3p.google.drive.thumbnail.job"
+    _description = "Google Drive Thumbnail Queue Job"
+    _order = "queued_at, id"
+
+    item_id = fields.Many2one(
+        "o3p.google.drive.item",
+        required=True,
+        index=True,
+        ondelete="cascade",
+    )
+    state = fields.Selection(
+        [
+            ("pending", "Pending"),
+            ("processing", "Processing"),
+            ("done", "Done"),
+            ("failed", "Failed"),
+        ],
+        required=True,
+        default="pending",
+        index=True,
+    )
+    queued_at = fields.Datetime(required=True, default=fields.Datetime.now)
+    attempts = fields.Integer(default=0, readonly=True)
+    last_error = fields.Text(readonly=True)
+
+    _item_unique = models.Constraint(
+        "UNIQUE (item_id)",
+        "A Google Drive item can only have one thumbnail queue job.",
+    )
+
+    @api.model
+    def _enqueue_items(self, items):
+        supported_items = items.filtered(
+            lambda item: (item.mime_type or "").startswith(("image/", "video/"))
+        )
+        if not supported_items:
+            return self.browse()
+
+        jobs = self.sudo().search([("item_id", "in", supported_items.ids)])
+        jobs.write(
+            {
+                "state": "pending",
+                "queued_at": fields.Datetime.now(),
+                "last_error": False,
+            }
+        )
+        queued_item_ids = set(jobs.item_id.ids)
+        jobs |= self.sudo().create(
+            [
+                {"item_id": item.id}
+                for item in supported_items
+                if item.id not in queued_item_ids
+            ]
+        )
+        self.env.ref("o3p_google_drive.ir_cron_thumbnail_queue")._trigger(
+            coalesce=1
+        )
+        return jobs
+
+    @api.model
+    def _process_queue(self, limit=THUMBNAIL_QUEUE_BATCH_SIZE):
+        jobs = self.sudo().search(
+            [("state", "in", ("pending", "processing"))],
+            order="queued_at, id",
+            limit=limit,
+        )
+        if not jobs:
+            return True
+
+        access_token = self.env["o3p.google.drive.item"]._get_google_access_token()
+        thumbnail_model = self.env["o3p.google.drive.thumbnail"].sudo()
+        for job in jobs:
+            try:
+                with self.env.cr.savepoint():
+                    job.write(
+                        {
+                            "state": "processing",
+                            "attempts": job.attempts + 1,
+                            "last_error": False,
+                        }
+                    )
+                    item = job.item_id.exists()
+                    if not item:
+                        job.unlink()
+                    else:
+                        mime_type = item.mime_type or ""
+                        meta = item.meta if isinstance(item.meta, dict) else {}
+                        google_item = meta.get("item", {})
+                        if mime_type.startswith("image/"):
+                            thumbnail_model._refresh_image_thumbnail(
+                                item,
+                                google_item,
+                                access_token,
+                            )
+                        elif mime_type.startswith("video/"):
+                            thumbnail_model._refresh_video_thumbnail(
+                                item,
+                                google_item,
+                                access_token,
+                            )
+                        job.write({"state": "done", "last_error": False})
+            except Exception as error:
+                _logger.warning(
+                    "Thumbnail queue job failed for Google Drive item %s.",
+                    job.item_id.gid,
+                    exc_info=True,
+                )
+                job.write(
+                    {
+                        "state": "failed",
+                        "last_error": str(error)[:2000],
+                    }
+                )
+
+            remaining = self.sudo().search_count(
+                [("state", "in", ("pending", "processing"))]
+            )
+            seconds_left = self.env["ir.cron"]._commit_progress(
+                1,
+                remaining=remaining,
+            )
+            if not seconds_left:
+                break
+        return True
