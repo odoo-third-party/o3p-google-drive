@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="google_drive_report_view_list" model="ir.ui.view">
+        <field name="name">o3p.google.drive.report.list</field>
+        <field name="model">o3p.google.drive.report</field>
+        <field name="arch" type="xml">
+            <list string="Google Drive Reports" default_order="generated_at desc,id desc">
+                <field name="name"/>
+                <field name="item_id" optional="show"/>
+                <field name="report_type" optional="show"/>
+                <field name="state" optional="show"/>
+                <field name="generated_at" optional="show"/>
+                <field name="active" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="google_drive_report_view_form" model="ir.ui.view">
+        <field name="name">o3p.google.drive.report.form</field>
+        <field name="model">o3p.google.drive.report</field>
+        <field name="arch" type="xml">
+            <form string="Google Drive Report">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="item_id"/>
+                            <field name="report_type"/>
+                        </group>
+                        <group>
+                            <field name="state"/>
+                            <field name="generated_at"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Content" name="content">
+                            <field name="content" nolabel="1" placeholder="Report content…"/>
+                        </page>
+                        <page string="Metadata" name="metadata">
+                            <field name="meta" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="google_drive_report_view_search" model="ir.ui.view">
+        <field name="name">o3p.google.drive.report.search</field>
+        <field name="model">o3p.google.drive.report</field>
+        <field name="arch" type="xml">
+            <search string="Google Drive Reports">
+                <field name="name"/>
+                <field name="item_id"/>
+                <field name="report_type"/>
+                <field name="state"/>
+                <filter name="ready" string="Ready" domain="[('state', '=', 'ready')]"/>
+                <filter name="errors" string="Errors" domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_google_drive_report" model="ir.actions.act_window">
+        <field name="name">Google Drive Reports</field>
+        <field name="res_model">o3p.google.drive.report</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="google_drive_report_view_search"/>
+    </record>
+
+    <menuitem id="menu_o3p_google_drive_report"
+              name="Reports"
+              parent="menu_o3p_google_drive_technical"
+              action="action_google_drive_report"
+              groups="base.group_system"
+              sequence="40"/>
+</odoo>
