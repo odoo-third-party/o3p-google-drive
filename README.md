@@ -19,3 +19,16 @@ The deployment scripts target the same Odoo 20 instance as the Persona addon:
 
 Paths, service names, database names, and users can be overridden through the
 environment variables declared at the top of each script.
+
+## Explorer item actions
+
+Other addons can add MIME-aware entries to the explorer context menu by creating
+an `o3p.google.drive.item.action` linked to an `ir.actions.server` whose model is
+`o3p.google.drive.item`. The `mime_type` accepts exact values and wildcards such
+as `image/*` or `*/*`; `icon` is a Material Symbols icon name.
+
+Action registrations are loaded with the current user's access rights. Extension
+addons should grant read access to their intended groups, optionally with an
+access domain that limits which registration records those groups can see. The
+server action's own group and record access checks are also enforced when it is
+run.

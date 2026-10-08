@@ -334,17 +334,36 @@ class GoogleDriveItem(models.Model):
             [("item_id", "in", children.ids)]
         )
         thumbnail_by_item = {thumbnail.item_id.id: thumbnail for thumbnail in thumbnails}
+        actions_by_mime_type = self.env[
+            "o3p.google.drive.item.action"
+        ]._get_values_by_mime_type((folder | children).mapped("mime_type"))
 
         return {
-            "folder": self._explorer_item_values(folder),
+            "folder": self._explorer_item_values(
+                folder,
+                actions=actions_by_mime_type.get(folder.mime_type, []),
+            ),
             "items": [
                 self._explorer_item_values(
                     item,
                     thumbnail=thumbnail_by_item.get(item.id),
+                    actions=actions_by_mime_type.get(item.mime_type, []),
                 )
                 for item in children
             ],
         }
+
+    @api.model
+    def run_explorer_item_action(self, item_id, action_id):
+        item = self.browse(int(item_id)).exists()
+        if not item:
+            raise UserError(_("The Google Drive item no longer exists."))
+        action = self.env["o3p.google.drive.item.action"].browse(
+            int(action_id)
+        ).exists()
+        if not action:
+            raise UserError(_("The explorer action no longer exists."))
+        return action._run_for_item(item)
 
     @api.model
     def refresh_explorer_folder(self, folder_id, generate_thumbnails=False):
@@ -422,7 +441,7 @@ class GoogleDriveItem(models.Model):
         ]
 
     @api.model
-    def _explorer_item_values(self, item, thumbnail=None):
+    def _explorer_item_values(self, item, thumbnail=None, actions=None):
         meta = item.meta if isinstance(item.meta, dict) else {}
         google_item = meta.get("item") if isinstance(meta.get("item"), dict) else {}
         return {
@@ -441,6 +460,7 @@ class GoogleDriveItem(models.Model):
                 if thumbnail
                 else False
             ),
+            "actions": actions or [],
         }
 
     def _refresh_descendants(self, access_token, visited_gids=None):

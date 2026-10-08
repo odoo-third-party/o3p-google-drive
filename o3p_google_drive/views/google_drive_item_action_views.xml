@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="google_drive_item_action_view_list" model="ir.ui.view">
+        <field name="name">o3p.google.drive.item.action.list</field>
+        <field name="model">o3p.google.drive.item.action</field>
+        <field name="arch" type="xml">
+            <list string="Explorer Item Actions" default_order="sequence,name,id">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="mime_type"/>
+                <field name="icon" optional="show"/>
+                <field name="server_action_id"/>
+                <field name="active" widget="boolean_toggle" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="google_drive_item_action_view_form" model="ir.ui.view">
+        <field name="name">o3p.google.drive.item.action.form</field>
+        <field name="model">o3p.google.drive.item.action</field>
+        <field name="arch" type="xml">
+            <form string="Explorer Item Action">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <field name="active"/>
+                        <field name="sequence"/>
+                        <field name="mime_type"/>
+                        <field name="icon"/>
+                        <field name="server_action_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_google_drive_item_action" model="ir.actions.act_window">
+        <field name="name">Explorer Item Actions</field>
+        <field name="res_model">o3p.google.drive.item.action</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_o3p_google_drive_item_action"
+              name="Explorer Actions"
+              parent="menu_o3p_google_drive_technical"
+              action="action_google_drive_item_action"
+              groups="base.group_system"
+              sequence="30"/>
+</odoo>

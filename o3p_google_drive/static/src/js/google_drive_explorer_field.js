@@ -31,6 +31,7 @@ export class GoogleDriveExplorerField extends Component {
 
     setup() {
         this.orm = useService("orm");
+        this.actionService = useService("action");
         this.notification = useService("notification");
         this.navigator = null;
         this.pendingThumbnailIds = new Set();
@@ -265,6 +266,30 @@ export class GoogleDriveExplorerField extends Component {
         const item = this._itemFromEvent(event);
         this.state.contextItemId = false;
         this._openInGoogleDrive(item?.web_view_link);
+    }
+
+    async onRunAdditionalAction(event) {
+        const item = this._itemFromEvent(event);
+        const actionId = Number(event.currentTarget.dataset.actionId);
+        if (!item || !actionId) {
+            return;
+        }
+        this.state.contextItemId = false;
+        try {
+            const result = await this.orm.call(
+                "o3p.google.drive.item",
+                "run_explorer_item_action",
+                [item.id, actionId]
+            );
+            if (result) {
+                await this.actionService.doAction(result);
+            }
+        } catch (error) {
+            this.notification.add(
+                error.message || _t("Could not run the explorer item action."),
+                { type: "danger" }
+            );
+        }
     }
 
     canSetContactImage(item) {

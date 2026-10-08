@@ -134,6 +134,19 @@
                                 </button>
                                 <div t-if="this.state.contextItemId === item.id"
                                      class="o_o3p_drive_explorer_context_menu">
+                                    <button t-foreach="item.actions"
+                                            t-as="action"
+                                            t-key="action.id"
+                                            type="button"
+                                            class="dropdown-item"
+                                            t-att-data-item-id="item.id"
+                                            t-att-data-action-id="action.id"
+                                            t-on-click="this.onRunAdditionalAction">
+                                        <i class="oi oi-fw me-2"
+                                           t-att-data-icon="action.icon"
+                                           aria-hidden="true"/>
+                                        <t t-out="action.name"/>
+                                    </button>
                                     <button t-if="this.canSetContactImage(item)"
                                             type="button"
                                             class="dropdown-item"
@@ -155,7 +168,7 @@
                                            aria-hidden="true"/>
                                         Open in Google Drive
                                     </button>
-                                    <span t-if="!item.web_view_link &amp;&amp; !this.canSetContactImage(item)">Actions for this MIME type will appear here.</span>
+                                    <span t-if="!item.actions.length &amp;&amp; !item.web_view_link &amp;&amp; !this.canSetContactImage(item)">Actions for this MIME type will appear here.</span>
                                 </div>
                             </td>
                         </tr>
@@ -202,6 +215,19 @@
                     </button>
                     <div t-if="this.state.contextItemId === item.id"
                          class="o_o3p_drive_explorer_context_menu">
+                        <button t-foreach="item.actions"
+                                t-as="action"
+                                t-key="action.id"
+                                type="button"
+                                class="dropdown-item"
+                                t-att-data-item-id="item.id"
+                                t-att-data-action-id="action.id"
+                                t-on-click="this.onRunAdditionalAction">
+                            <i class="oi oi-fw me-2"
+                               t-att-data-icon="action.icon"
+                               aria-hidden="true"/>
+                            <t t-out="action.name"/>
+                        </button>
                         <button t-if="this.canSetContactImage(item)"
                                 type="button"
                                 class="dropdown-item"
@@ -223,7 +249,7 @@
                                aria-hidden="true"/>
                             Open in Google Drive
                         </button>
-                        <span t-if="!item.web_view_link &amp;&amp; !this.canSetContactImage(item)">Actions for this MIME type will appear here.</span>
+                        <span t-if="!item.actions.length &amp;&amp; !item.web_view_link &amp;&amp; !this.canSetContactImage(item)">Actions for this MIME type will appear here.</span>
                     </div>
                 </article>
             </div>
