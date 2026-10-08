@@ -18,6 +18,7 @@
             <list string="Google Drive Thumbnails" create="0">
                 <field name="image" widget="image"/>
                 <field name="item_id"/>
+                <field name="item_gid" optional="show"/>
                 <field name="kind"/>
                 <field name="mimetype" optional="show"/>
                 <field name="width" optional="show"/>
@@ -39,6 +40,7 @@
                         <field name="image" widget="image" class="oe_avatar"/>
                         <group>
                             <field name="item_id"/>
+                            <field name="item_gid"/>
                             <field name="kind"/>
                             <field name="mimetype"/>
                             <field name="width"/>

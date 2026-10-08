@@ -67,6 +67,25 @@ class GoogleDriveItem(models.Model):
         "Each Google Drive item can only be registered once.",
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        items = super().create(vals_list)
+        items._reattach_orphan_thumbnails()
+        return items
+
+    def _reattach_orphan_thumbnails(self):
+        items_by_gid = {item.gid: item for item in self if item.gid}
+        if not items_by_gid:
+            return
+        thumbnails = self.env["o3p.google.drive.thumbnail"].sudo().search(
+            [
+                ("item_id", "=", False),
+                ("item_gid", "in", list(items_by_gid)),
+            ]
+        )
+        for thumbnail in thumbnails:
+            thumbnail.item_id = items_by_gid[thumbnail.item_gid]
+
     def init(self):
         self.env.cr.execute(
             """

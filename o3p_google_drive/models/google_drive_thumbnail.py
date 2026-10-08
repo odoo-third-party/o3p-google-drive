@@ -32,9 +32,14 @@ class GoogleDriveThumbnail(models.Model):
 
     item_id = fields.Many2one(
         "o3p.google.drive.item",
+        index=True,
+        ondelete="set null",
+    )
+    item_gid = fields.Char(
+        string="Google Drive ID",
         required=True,
         index=True,
-        ondelete="cascade",
+        copy=False,
     )
     kind = fields.Selection(
         [("image", "Image"), ("video", "Video")],
@@ -53,10 +58,33 @@ class GoogleDriveThumbnail(models.Model):
     height = fields.Integer(readonly=True)
     source_modified_time = fields.Datetime(readonly=True)
     refreshed_at = fields.Datetime(readonly=True)
-    _item_unique = models.Constraint(
-        "UNIQUE (item_id)",
-        "A Google Drive item can only have one thumbnail.",
+    _item_gid_unique = models.Constraint(
+        "UNIQUE (item_gid)",
+        "A Google Drive ID can only have one thumbnail.",
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        item_ids = {
+            values.get("item_id")
+            for values in vals_list
+            if values.get("item_id")
+        }
+        gids_by_item_id = {
+            item.id: item.gid
+            for item in self.env["o3p.google.drive.item"].browse(list(item_ids)).exists()
+        }
+        for values in vals_list:
+            if values.get("item_id") and not values.get("item_gid"):
+                values["item_gid"] = gids_by_item_id.get(values["item_id"])
+        return super().create(vals_list)
+
+    def write(self, values):
+        if values.get("item_id"):
+            item = self.env["o3p.google.drive.item"].browse(values["item_id"]).exists()
+            if item:
+                values = {**values, "item_gid": item.gid}
+        return super().write(values)
 
     @api.model
     def _refresh_image_thumbnail(self, item, google_item, access_token):
@@ -103,6 +131,7 @@ class GoogleDriveThumbnail(models.Model):
         thumbnail, width, height = self._make_webp_thumbnail(image_content)
         values = {
             "item_id": item.id,
+            "item_gid": item.gid,
             "kind": kind,
             "image": BinaryBytes(thumbnail, filename="thumbnail.webp"),
             "mimetype": "image/webp",
@@ -112,7 +141,7 @@ class GoogleDriveThumbnail(models.Model):
             "source_modified_time": item.modified_time,
             "refreshed_at": fields.Datetime.now(),
         }
-        existing = self.search([("item_id", "=", item.id)], limit=1)
+        existing = self.search([("item_gid", "=", item.gid)], limit=1)
         if existing:
             existing.write(values)
             return existing
