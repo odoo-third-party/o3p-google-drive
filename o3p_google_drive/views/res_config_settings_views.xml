@@ -22,6 +22,56 @@
     "refresh_token": "..."
 }'/>
                         </setting>
+                        <setting id="o3p_google_drive_anomaly_detection"
+                                 string="Google Drive cache anomaly detection"
+                                 help="Queues consistency checks against the Google Drive items cached in Odoo.">
+                            <div class="content-group">
+                                <p class="mb-3">
+                                    The scan runs in a persistent background queue. Each completed
+                                    run is appended as structured JSON to the latest anomaly report,
+                                    preserving the database IDs and Google Drive IDs needed by later
+                                    repair tools. This detector only reports problems and never changes
+                                    Drive items.
+                                </p>
+                                <div class="alert alert-info mb-3" role="note">
+                                    <strong>Duplicate names inside one folder</strong>
+                                    <p class="mb-0 mt-1">
+                                        Finds non-trashed children with exactly the same name and the
+                                        same parent. Every matching child is recorded together with its
+                                        parent, MIME type, Odoo item ID, and Google Drive ID, allowing a
+                                        later repair action to resolve the ambiguity safely.
+                                    </p>
+                                </div>
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <span>Status:</span>
+                                    <field name="google_drive_anomaly_status"
+                                           widget="badge"
+                                           readonly="1"/>
+                                    <button name="action_start_google_drive_anomaly_detection"
+                                            type="object"
+                                            string="Start anomaly scan"
+                                            class="btn-primary"/>
+                                </div>
+                                <field name="google_drive_anomaly_status_detail"
+                                       readonly="1"
+                                       nolabel="1"/>
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <field name="google_drive_anomaly_create_new_report"/>
+                                    <label for="google_drive_anomaly_create_new_report"/>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mt-2"
+                                     invisible="not google_drive_latest_anomaly_report_id">
+                                    <span>Latest report:</span>
+                                    <field name="google_drive_latest_anomaly_report_id"
+                                           readonly="1"
+                                           options="{'no_create': True}"/>
+                                    <button name="action_open_latest_google_drive_anomaly_report"
+                                            type="object"
+                                            string="Open report"
+                                            class="btn-secondary"/>
+                                </div>
+                            </div>
+                        </setting>
                     </block>
                 </app>
             </xpath>

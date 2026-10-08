@@ -1,6 +1,9 @@
 from odoo import fields, models
 
 
+ANOMALY_REPORT_TYPE = "anomalies_detection"
+
+
 class GoogleDriveReport(models.Model):
     _name = "o3p.google.drive.report"
     _description = "Google Drive Report"
