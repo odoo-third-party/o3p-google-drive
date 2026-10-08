@@ -7,9 +7,11 @@ import { useService } from "@web/core/utils/hooks";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
 import {
     Component,
+    onPatched,
     onWillStart,
     onWillUpdateProps,
     proxy,
+    signal,
     t,
     useProps,
 } from "@odoo/owl";
@@ -18,6 +20,8 @@ import { EXPLORER_VIEW_MODES, ExplorerNavigator } from "./explorer";
 
 export class GoogleDriveExplorerField extends Component {
     static template = "o3p_google_drive.GoogleDriveExplorerField";
+
+    explorerRef = signal.ref();
 
     props = useProps({
         ...standardFieldProps,
@@ -31,6 +35,7 @@ export class GoogleDriveExplorerField extends Component {
         this.navigator = null;
         this.pendingThumbnailIds = new Set();
         this.attemptedEmptyFolderRefreshIds = new Set();
+        this.revealBottomAfterExpansion = false;
         this.state = proxy({
             loading: true,
             folder: null,
@@ -50,6 +55,7 @@ export class GoogleDriveExplorerField extends Component {
                 return this.initialize(nextRootId);
             }
         });
+        onPatched(() => this._revealExpandedBottom());
     }
 
     async initialize(rootId) {
@@ -218,7 +224,37 @@ export class GoogleDriveExplorerField extends Component {
     }
 
     onToggleHeight() {
-        this.state.isExpanded = !this.state.isExpanded;
+        const isExpanding = !this.state.isExpanded;
+        this.revealBottomAfterExpansion = isExpanding;
+        this.state.isExpanded = isExpanding;
+    }
+
+    _revealExpandedBottom() {
+        if (!this.revealBottomAfterExpansion) {
+            return;
+        }
+        this.revealBottomAfterExpansion = false;
+        const explorer = this.explorerRef();
+        if (!explorer) {
+            return;
+        }
+
+        let revealed = false;
+        const reveal = () => {
+            if (revealed) {
+                return;
+            }
+            revealed = true;
+            if (this.state.isExpanded && explorer.isConnected) {
+                explorer.scrollIntoView({
+                    behavior: "smooth",
+                    block: "end",
+                    inline: "nearest",
+                });
+            }
+        };
+        explorer.addEventListener("transitionend", reveal, { once: true });
+        browser.setTimeout(reveal, 220);
     }
 
     onOpenCurrentInDrive() {
