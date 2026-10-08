@@ -69,9 +69,42 @@ class GoogleDriveItem(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        items = super().create(vals_list)
-        items._reattach_orphan_thumbnails()
-        return items
+        requested_gids = {
+            values.get("gid") for values in vals_list if values.get("gid")
+        }
+        existing_items = self.with_context(
+            o3p_google_drive_skip_auto_refresh=True
+        ).search([("gid", "in", list(requested_gids))])
+        existing_by_gid = {item.gid: item.id for item in existing_items}
+
+        values_to_create = []
+        new_position_by_gid = {}
+        result_references = []
+        for values in vals_list:
+            gid = values.get("gid")
+            if gid in existing_by_gid:
+                result_references.append(("existing", existing_by_gid[gid]))
+                continue
+            if gid and gid in new_position_by_gid:
+                result_references.append(("new", new_position_by_gid[gid]))
+                continue
+
+            position = len(values_to_create)
+            values_to_create.append(values)
+            if gid:
+                new_position_by_gid[gid] = position
+            result_references.append(("new", position))
+
+        created_items = super().create(values_to_create) if values_to_create else self
+        created_items._reattach_orphan_thumbnails()
+        created_ids = created_items.ids
+        result_ids = [
+            reference
+            if source == "existing"
+            else created_ids[reference]
+            for source, reference in result_references
+        ]
+        return self.browse(result_ids)
 
     def _reattach_orphan_thumbnails(self):
         items_by_gid = {item.gid: item for item in self if item.gid}
