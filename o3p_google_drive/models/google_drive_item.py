@@ -39,6 +39,12 @@ class GoogleDriveItem(models.Model):
             "the 'item' key and its retrieval time under 'fetched_at'."
         ),
     )
+    custom_meta = fields.Json(
+        string="Custom Metadata",
+        default=dict,
+        copy=False,
+        help="Custom metadata supplied by integrations and downstream processes.",
+    )
     is_starting_point = fields.Boolean(
         string="Starting Point",
         default=False,

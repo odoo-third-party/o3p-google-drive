@@ -82,6 +82,9 @@
                         <page string="Raw Metadata" name="raw_metadata">
                             <field name="meta" nolabel="1"/>
                         </page>
+                        <page string="Custom Metadata" name="custom_metadata">
+                            <field name="custom_meta" nolabel="1"/>
+                        </page>
                         <page string="Thumbnails" name="thumbnails">
                             <field name="thumbnail_ids" readonly="1">
                                 <list create="0" delete="0">
