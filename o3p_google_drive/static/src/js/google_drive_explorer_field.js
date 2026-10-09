@@ -42,7 +42,7 @@ export class GoogleDriveExplorerField extends Component {
             refreshing: false,
             folder: null,
             items: [],
-            viewMode: EXPLORER_VIEW_MODES.DETAILS,
+            viewMode: EXPLORER_VIEW_MODES.ICONS,
             contextItemId: false,
             canGoBack: false,
             isHome: true,
