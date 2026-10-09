@@ -39,11 +39,11 @@ class GoogleDriveItem(models.Model):
             "the 'item' key and its retrieval time under 'fetched_at'."
         ),
     )
-    custom_meta = fields.Json(
+    custom_meta = fields.Text(
         string="Custom Metadata",
-        default=dict,
         copy=False,
-        help="Custom metadata supplied by integrations and downstream processes.",
+        help="Custom metadata supplied by integrations and downstream processes."
+        " Stored as text so it can be searched with standard Odoo filters.",
     )
     is_starting_point = fields.Boolean(
         string="Starting Point",
