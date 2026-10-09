@@ -39,6 +39,7 @@ export class GoogleDriveExplorerField extends Component {
         this.revealBottomAfterExpansion = false;
         this.state = proxy({
             loading: true,
+            refreshing: false,
             folder: null,
             items: [],
             viewMode: EXPLORER_VIEW_MODES.DETAILS,
@@ -183,7 +184,7 @@ export class GoogleDriveExplorerField extends Component {
 
     async onOpenItem(event) {
         const item = this._itemFromEvent(event);
-        if (!item || !item.is_folder || this.state.loading) {
+        if (!item || !item.is_folder || this.state.loading || this.state.refreshing) {
             return;
         }
         const previousId = this.navigator.currentId;
@@ -197,7 +198,7 @@ export class GoogleDriveExplorerField extends Component {
     }
 
     async onBack() {
-        if (!this.navigator?.canGoBack || this.state.loading) {
+        if (!this.navigator?.canGoBack || this.state.loading || this.state.refreshing) {
             return;
         }
         const targetId = this.navigator.back();
@@ -206,12 +207,47 @@ export class GoogleDriveExplorerField extends Component {
     }
 
     async onHome() {
-        if (!this.navigator || this.navigator.isHome || this.state.loading) {
+        if (
+            !this.navigator ||
+            this.navigator.isHome ||
+            this.state.loading ||
+            this.state.refreshing
+        ) {
             return;
         }
         const targetId = this.navigator.home();
         this._syncNavigationState();
         await this._loadFolder(targetId);
+    }
+
+    async onRefresh() {
+        if (!this.navigator || this.state.loading || this.state.refreshing) {
+            return;
+        }
+        const folderId = this.navigator.currentId;
+        this.state.refreshing = true;
+        this.state.contextItemId = false;
+        try {
+            const payload = await this.orm.call(
+                "o3p.google.drive.item",
+                "refresh_explorer_folder",
+                [folderId]
+            );
+            if (this.navigator?.currentId !== folderId) {
+                return;
+            }
+            this.state.folder = payload.folder;
+            this.state.items = payload.items;
+            this.attemptedEmptyFolderRefreshIds.add(folderId);
+            this._scheduleMissingThumbnails(payload.items);
+        } catch (error) {
+            this.notification.add(
+                error.message || _t("Could not refresh this Google Drive folder."),
+                { type: "danger" }
+            );
+        } finally {
+            this.state.refreshing = false;
+        }
     }
 
     onSetDetailsView() {

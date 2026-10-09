@@ -11,16 +11,26 @@
                     <button type="button"
                             class="btn btn-light"
                             title="Back"
-                            t-att-disabled="!this.state.canGoBack || this.state.loading"
+                            t-att-disabled="!this.state.canGoBack || this.state.loading || this.state.refreshing"
                             t-on-click="this.onBack">
                         <i class="oi oi-fw" data-icon="arrow_back" aria-hidden="true"/>
                     </button>
                     <button type="button"
                             class="btn btn-light"
                             title="Home"
-                            t-att-disabled="this.state.isHome || this.state.loading"
+                            t-att-disabled="this.state.isHome || this.state.loading || this.state.refreshing"
                             t-on-click="this.onHome">
                         <i class="oi oi-fw" data-icon="home" aria-hidden="true"/>
+                    </button>
+                    <button type="button"
+                            class="btn btn-light"
+                            title="Refresh current folder"
+                            aria-label="Refresh current folder"
+                            t-att-disabled="!this.state.folder || this.state.loading || this.state.refreshing"
+                            t-on-click="this.onRefresh">
+                        <i t-att-class="this.state.refreshing ? 'oi oi-fw oi-spin' : 'oi oi-fw'"
+                           data-icon="autorenew"
+                           aria-hidden="true"/>
                     </button>
                 </div>
 

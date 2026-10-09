@@ -293,11 +293,43 @@ class GoogleDriveItem(models.Model):
         children = self.env["o3p.google.drive.item"]
         for item in self:
             item.ensure_one()
+            remote_child_gids = set()
             for child_item in item._list_google_children(item.gid, access_token):
+                remote_child_gids.add(child_item.get("id"))
                 children |= self._upsert_google_item(child_item)
+            item._remove_stale_child_memberships(remote_child_gids)
         if generate_thumbnails:
             self.env["o3p.google.drive.thumbnail.job"]._enqueue_items(children)
         return True
+
+    def _remove_stale_child_memberships(self, remote_child_gids):
+        self.ensure_one()
+        self.env.cr.execute(
+            """
+            SELECT id
+              FROM o3p_google_drive_item
+             WHERE parent_gids @> %s::jsonb
+               AND NOT (gid = ANY(%s))
+            """,
+            [json.dumps([self.gid]), list(remote_child_gids)],
+        )
+        stale_children = self.browse([row[0] for row in self.env.cr.fetchall()])
+        for child in stale_children:
+            parent_gids = [
+                parent_gid
+                for parent_gid in (child.parent_gids or [])
+                if parent_gid != self.gid
+            ]
+            meta = child.meta if isinstance(child.meta, dict) else {}
+            google_item = meta.get("item")
+            if isinstance(google_item, dict):
+                meta = {
+                    **meta,
+                    "item": {**google_item, "parents": parent_gids},
+                }
+            child.with_context(o3p_google_drive_skip_auto_refresh=True).write(
+                {"parent_gids": parent_gids, "meta": meta}
+            )
 
     def _refresh_folder_items(self, access_token, generate_thumbnails=False):
         visited_gids = set()
@@ -386,7 +418,7 @@ class GoogleDriveItem(models.Model):
             access_token,
             generate_thumbnails=generate_thumbnails,
         )
-        return True
+        return self.get_explorer_folder(folder.id)
 
     @api.model
     def generate_explorer_thumbnails(self, item_ids):
