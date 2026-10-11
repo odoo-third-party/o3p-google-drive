@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="server_action_show_thumb_meta" model="ir.actions.server">
+        <field name="name">show thumb meta</field>
+        <field name="model_id" ref="model_o3p_google_drive_item"/>
+        <field name="state">code</field>
+        <field name="code">action = record.action_show_thumb_meta()</field>
+    </record>
+
+    <record id="item_action_image_show_thumb_meta" model="o3p.google.drive.item.action">
+        <field name="name">show thumb meta</field>
+        <field name="mime_type">image/*</field>
+        <field name="icon">info</field>
+        <field name="server_action_id" ref="server_action_show_thumb_meta"/>
+    </record>
+
+    <record id="item_action_video_show_thumb_meta" model="o3p.google.drive.item.action">
+        <field name="name">show thumb meta</field>
+        <field name="mime_type">video/*</field>
+        <field name="icon">info</field>
+        <field name="server_action_id" ref="server_action_show_thumb_meta"/>
+    </record>
+</odoo>

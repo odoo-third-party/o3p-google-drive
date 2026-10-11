@@ -220,6 +220,28 @@ class GoogleDriveItem(models.Model):
             item._refresh_meta()
         return True
 
+    def action_show_thumb_meta(self):
+        self.ensure_one()
+        self.check_access("read")
+        if not (self.mime_type or "").startswith(("image/", "video/")):
+            raise UserError(_("Thumbnail metadata is only available for images and videos."))
+        thumbnail = self.env["o3p.google.drive.thumbnail"].search(
+            [("item_id", "=", self.id)], limit=1
+        )
+        if not thumbnail:
+            raise UserError(_("This item does not have a thumbnail yet."))
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("show thumb meta"),
+            "res_model": "o3p.google.drive.thumbnail",
+            "res_id": thumbnail.id,
+            "view_mode": "form",
+            "views": [(self.env.ref(
+                "o3p_google_drive.google_drive_thumbnail_view_form"
+            ).id, "form")],
+            "target": "new",
+        }
+
     def action_refresh_tree(self, generate_thumbnails=False):
         access_token = self._get_google_access_token()
         for item in self:
