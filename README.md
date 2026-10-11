@@ -22,6 +22,13 @@ environment variables declared at the top of each script.
 
 ## Explorer item actions
 
+Item indexes are installed or updated when the addon is upgraded. Parent IDs use
+a JSON containment index for folder browsing and reconciliation; names and custom
+metadata use Odoo trigram indexes for text searches (requires PostgreSQL
+`pg_trgm` support). Starting points have a partial index. Custom metadata is also
+available in the Items search bar. These indexes speed up local database queries;
+automatic refreshes of stale items still require Google API requests.
+
 Other addons can add MIME-aware entries to the explorer context menu by creating
 an `o3p.google.drive.item.action` linked to an `ir.actions.server` whose model is
 `o3p.google.drive.item`. The `mime_type` accepts exact values and wildcards such

@@ -9,6 +9,7 @@
                   decoration-muted="trashed">
                 <field name="name"/>
                 <field name="gid"/>
+                <field name="custom_meta"/>
                 <field name="is_starting_point" optional="show"/>
                 <field name="mime_type" optional="show"/>
                 <field name="drive_id" optional="show"/>

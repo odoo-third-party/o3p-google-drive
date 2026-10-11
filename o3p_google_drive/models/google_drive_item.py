@@ -41,6 +41,7 @@ class GoogleDriveItem(models.Model):
     )
     custom_meta = fields.Text(
         string="Custom Metadata",
+        index="trigram",
         copy=False,
         help="Custom metadata supplied by integrations and downstream processes."
         " Stored as text so it can be searched with standard Odoo filters.",
@@ -52,7 +53,7 @@ class GoogleDriveItem(models.Model):
         help="Marks an item as a starting point for Google Drive traversal.",
     )
 
-    name = fields.Char(index=True)
+    name = fields.Char(index="trigram")
     mime_type = fields.Char()
     parent_gids = fields.Json(default=list)
     created_time = fields.Datetime()
@@ -71,6 +72,14 @@ class GoogleDriveItem(models.Model):
     _gid_unique = models.Constraint(
         "UNIQUE (gid)",
         "Each Google Drive item can only be registered once.",
+    )
+
+    # Both folder browsing and parent reconciliation use JSON containment (@>).
+    _parent_gids_index = models.Index(
+        "USING gin (parent_gids jsonb_path_ops)"
+    )
+    _starting_points_index = models.Index(
+        "(id) WHERE is_starting_point = TRUE"
     )
 
     @api.model_create_multi
