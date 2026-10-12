@@ -84,6 +84,12 @@ class GoogleDriveItem(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        vals_list = [dict(values) for values in vals_list]
+        fallback_gids = set()
+        for values in vals_list:
+            if not values.get("gid") and values.get("name"):
+                values["gid"] = values["name"]
+                fallback_gids.add(values["gid"])
         requested_gids = {
             values.get("gid") for values in vals_list if values.get("gid")
         }
@@ -112,6 +118,11 @@ class GoogleDriveItem(models.Model):
 
         created_items = super().create(values_to_create) if values_to_create else self
         created_items._reattach_orphan_thumbnails()
+        fallback_items = created_items.filtered(lambda item: item.gid in fallback_gids)
+        if fallback_items:
+            access_token = fallback_items._get_google_access_token()
+            for item in fallback_items:
+                item._refresh_meta(access_token=access_token)
         created_ids = created_items.ids
         result_ids = [
             reference
@@ -127,7 +138,18 @@ class GoogleDriveItem(models.Model):
             if "gid" in vals
             else self.browse([])
         )
+        renamed_items = self.browse([])
+        if "name" in vals and not self.env.context.get("o3p_google_drive_metadata_write"):
+            renamed_items = (self - changed_items).filtered(
+                lambda item: item.name != vals["name"]
+            )
+            if renamed_items and not vals["name"]:
+                raise UserError(_("A Google Drive item name cannot be empty."))
         result = super().write(vals)
+        if renamed_items:
+            access_token = renamed_items._get_google_access_token()
+            for item in renamed_items:
+                item._rename_google_item(vals["name"], access_token)
         if changed_items:
             access_token = changed_items._get_google_access_token()
             folders = self.browse([])
@@ -216,7 +238,10 @@ class GoogleDriveItem(models.Model):
         self.ensure_one()
         item = self._fetch_google_item(access_token=access_token)
         values = self._prepare_item_values(item, current_meta=self.meta)
-        self.with_context(o3p_google_drive_skip_auto_refresh=True).write(values)
+        self.with_context(
+            o3p_google_drive_skip_auto_refresh=True,
+            o3p_google_drive_metadata_write=True,
+        ).write(values)
         return values["meta"]
 
     @api.model
@@ -584,7 +609,10 @@ class GoogleDriveItem(models.Model):
             current_meta=existing.meta if existing else None,
         )
         if existing:
-            existing.with_context(o3p_google_drive_skip_auto_refresh=True).write(values)
+            existing.with_context(
+                o3p_google_drive_skip_auto_refresh=True,
+                o3p_google_drive_metadata_write=True,
+            ).write(values)
             return existing
         return self.with_context(o3p_google_drive_skip_auto_refresh=True).create(
             {"gid": gid, "is_starting_point": False, **values}
@@ -644,6 +672,27 @@ class GoogleDriveItem(models.Model):
                 _("Google Drive could not retrieve item %(gid)s.", gid=self.gid)
             ) from error
         return response.json()
+
+    def _rename_google_item(self, name, access_token):
+        self.ensure_one()
+        response = requests.patch(
+            f"{GOOGLE_DRIVE_API_URL}/files/{quote(self.gid, safe='')}",
+            headers={"Authorization": f"Bearer {access_token}"},
+            params={"fields": "*", "supportsAllDrives": "true"},
+            json={"name": name},
+            timeout=REQUEST_TIMEOUT,
+        )
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as error:
+            raise UserError(
+                _("Google Drive could not rename item %(gid)s.", gid=self.gid)
+            ) from error
+        values = self._prepare_item_values(response.json(), current_meta=self.meta)
+        self.with_context(
+            o3p_google_drive_skip_auto_refresh=True,
+            o3p_google_drive_metadata_write=True,
+        ).write(values)
 
     @api.model
     def _get_google_access_token(self):

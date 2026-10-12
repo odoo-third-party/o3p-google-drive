@@ -22,6 +22,18 @@ environment variables declared at the top of each script.
 
 ## Explorer item actions
 
+Item names can be edited in the item form or through the Odoo API. Changing an
+existing item's name renames the corresponding Google Drive file and stores the
+metadata returned by Google. Metadata scans update local names without sending
+renames back to Google. If the ID and name change together, the new ID takes
+precedence: its metadata is fetched and its full tree is scanned if it is a folder.
+
+Creating an item with an explicit Google Drive ID preserves the supplied name
+until a metadata scan. When only a name is supplied, it is copied into the ID and
+metadata retrieval is attempted immediately. An invalid or inaccessible ID causes
+the save to fail. Google must allow the configured account to rename files for
+name edits to succeed.
+
 Item indexes are installed or updated when the addon is upgraded. Parent IDs use
 a JSON containment index for folder browsing and reconciliation; names and custom
 metadata use Odoo trigram indexes for text searches (requires PostgreSQL
