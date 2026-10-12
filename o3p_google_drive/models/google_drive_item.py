@@ -121,6 +121,24 @@ class GoogleDriveItem(models.Model):
         ]
         return self.browse(result_ids)
 
+    def write(self, vals):
+        changed_items = (
+            self.filtered(lambda item: item.gid != vals["gid"])
+            if "gid" in vals
+            else self.browse([])
+        )
+        result = super().write(vals)
+        if changed_items:
+            access_token = changed_items._get_google_access_token()
+            folders = self.browse([])
+            for item in changed_items:
+                meta = item._refresh_meta(access_token=access_token)
+                if meta.get("item", {}).get("mimeType") == GOOGLE_FOLDER_MIME_TYPE:
+                    folders |= item
+            if folders:
+                folders._refresh_folder_items(access_token)
+        return result
+
     def _reattach_orphan_thumbnails(self):
         items_by_gid = {item.gid: item for item in self if item.gid}
         if not items_by_gid:
