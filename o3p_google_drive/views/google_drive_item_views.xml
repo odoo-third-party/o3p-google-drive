@@ -57,7 +57,7 @@
                     </div>
                     <group>
                         <group string="Google Drive">
-                            <field name="gid"/>
+                            <field name="gid" id="gid_value" widget="char"/>
                             <field name="is_starting_point"/>
                             <field name="mime_type" readonly="1"/>
                             <field name="drive_id" readonly="1"/>
@@ -76,6 +76,7 @@
                               name="explorer"
                               invisible="mime_type != 'application/vnd.google-apps.folder'">
                             <field name="gid"
+                                   id="gid_explorer"
                                    widget="o3p_google_drive_explorer"
                                    nolabel="1"
                                    readonly="1"/>
