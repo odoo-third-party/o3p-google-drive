@@ -22,6 +22,11 @@ environment variables declared at the top of each script.
 
 ## Explorer item actions
 
+New items are starting points by default. Items discovered automatically while
+scanning or navigating the tree are explicitly created with Starting Point off.
+Existing items keep their current flag, and API callers can explicitly supply
+`is_starting_point=False`.
+
 Item names can be edited in the item form or through the Odoo API. Changing an
 existing item's name renames the corresponding Google Drive file and stores the
 metadata returned by Google. Metadata scans update local names without sending

@@ -48,7 +48,7 @@ class GoogleDriveItem(models.Model):
     )
     is_starting_point = fields.Boolean(
         string="Starting Point",
-        default=False,
+        default=True,
         required=True,
         help="Marks an item as a starting point for Google Drive traversal.",
     )
@@ -178,7 +178,7 @@ class GoogleDriveItem(models.Model):
         self.env.cr.execute(
             """
             ALTER TABLE o3p_google_drive_item
-            ALTER COLUMN is_starting_point SET DEFAULT FALSE
+            ALTER COLUMN is_starting_point SET DEFAULT TRUE
             """
         )
 
